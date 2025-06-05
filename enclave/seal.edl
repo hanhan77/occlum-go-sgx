@@ -1,5 +1,5 @@
 enclave {
-    from "sgx_tstdc.edl" import *;
+    from "/opt/intel/sgxsdk/include/sgx_tstdc.edl" import *;
     include "stdint.h"
 
     trusted {

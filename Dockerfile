@@ -25,7 +25,7 @@ COPY . .
 
 # Build the enclave using host's SGX SDK
 RUN cd enclave && \
-    /opt/intel/sgxsdk/bin/x64/sgx_edger8r --trusted seal.edl && \
+    /opt/intel/sgxsdk/bin/x64/sgx_edger8r --trusted seal.edl --search-path /opt/intel/sgxsdk/include && \
     g++ -c seal.cpp -o seal.o -I/opt/intel/sgxsdk/include && \
     g++ -c seal_t.c -o seal_t.o -I/opt/intel/sgxsdk/include && \
     g++ -shared -o libseal.so seal.o seal_t.o -L/opt/intel/sgxsdk/sdk_libs -lsgx_trts -lsgx_tcrypto
