@@ -28,7 +28,16 @@ RUN cd enclave && \
     /opt/intel/sgxsdk/bin/x64/sgx_edger8r --trusted seal.edl --search-path /opt/intel/sgxsdk/include && \
     g++ -fPIC -c seal.cpp -o seal.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
     g++ -fPIC -c seal_t.c -o seal_t.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
-    g++ -o libseal.so seal.o seal_t.o -L/opt/intel/sgxsdk/lib64 -Wl,--whole-archive -lsgx_trts -lsgx_tcrypto -Wl,--no-whole-archive
+    g++ -shared -o libseal.so seal.o seal_t.o \
+        -L/opt/intel/sgxsdk/lib64 \
+        -Wl,--whole-archive \
+        -lsgx_trts \
+        -lsgx_tcrypto \
+        -lsgx_tstdc \
+        -lsgx_tcxx \
+        -lsgx_tkey_exchange \
+        -lsgx_tprotected_fs \
+        -Wl,--no-whole-archive
 
 # Build the Go application
 RUN go mod init occlum-go-seal && \
