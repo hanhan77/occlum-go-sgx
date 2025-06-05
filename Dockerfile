@@ -26,10 +26,9 @@ COPY . .
 # Build the enclave using host's SGX SDK
 RUN cd enclave && \
     /opt/intel/sgxsdk/bin/x64/sgx_edger8r --trusted seal.edl --search-path /opt/intel/sgxsdk/include && \
-    g++ -fPIC -c seal.cpp -o seal.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
-    g++ -fPIC -c seal_t.c -o seal_t.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
-    ar rcs libseal.a seal.o seal_t.o && \
-    g++ -shared -o libseal.so -Wl,--whole-archive libseal.a -Wl,--no-whole-archive \
+    g++ -c seal.cpp -o seal.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
+    g++ -c seal_t.c -o seal_t.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
+    g++ -o seal_enclave seal.o seal_t.o \
         -L/opt/intel/sgxsdk/lib64 \
         -lsgx_trts \
         -lsgx_tcrypto \
@@ -46,7 +45,7 @@ RUN go mod init occlum-go-seal && \
 RUN mkdir -p occlum_instance/image/bin && \
     mkdir -p occlum_instance/image/lib && \
     cp app occlum_instance/image/bin/ && \
-    cp enclave/libseal.so occlum_instance/image/lib/
+    cp enclave/seal_enclave occlum_instance/image/bin/
 
 # Build Occlum image
 RUN cd occlum_instance && \
