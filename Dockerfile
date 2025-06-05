@@ -1,5 +1,8 @@
 FROM occlum/occlum:0.29.3-ubuntu20.04
 
+# Remove Intel SGX repository configuration
+RUN rm -f /etc/apt/sources.list.d/intel-sgx.list
+
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
