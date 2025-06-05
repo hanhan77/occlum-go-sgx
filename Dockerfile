@@ -1,7 +1,18 @@
 FROM occlum/occlum:0.29.3-ubuntu20.04
 
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gcc \
+    g++ \
+    make \
+    cmake \
+    git \
+    wget \
+    libssl-dev \
+    pkg-config
+
 # Install Go
-RUN apt-get update && apt-get install -y wget git gcc libc6-dev
 RUN wget https://go.dev/dl/go1.20.5.linux-amd64.tar.gz && \
     tar -C /usr/local -xzf go1.20.5.linux-amd64.tar.gz && \
     rm go1.20.5.linux-amd64.tar.gz
@@ -11,8 +22,9 @@ ENV PATH=$PATH:/usr/local/go/bin
 WORKDIR /root/occlum-go-seal
 COPY . .
 
-# Build the enclave
+# Build the enclave using host's SGX SDK
 RUN cd enclave && \
+    /opt/intel/sgxsdk/bin/x64/sgx_edger8r --trusted seal.edl && \
     g++ -c seal.cpp -o seal.o -I/opt/intel/sgxsdk/include && \
     g++ -c seal_t.c -o seal_t.o -I/opt/intel/sgxsdk/include && \
     g++ -shared -o libseal.so seal.o seal_t.o -L/opt/intel/sgxsdk/sdk_libs -lsgx_trts -lsgx_tcrypto
