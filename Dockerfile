@@ -37,19 +37,19 @@ RUN cd enclave && \
         -I/opt/intel/sgxsdk/include \
         -I/opt/intel/sgxsdk/include/tlibc \
         -I/opt/intel/sgxsdk/include/linux && \
-    ar rcs libseal.a seal.o seal_t.o seal_u.o
+    g++ -shared -o libseal.so seal_u.o -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service
 
 # Build the Go application
 RUN go mod tidy && \
     CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include" \
-    CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,--start-group -lsgx_trts -lsgx_tservice -lsgx_tcrypto -lsgx_tstdc -lsgx_tcxx -lsgx_tkey_exchange -lsgx_tprotected_fs -Wl,--end-group -lsgx_urts -lsgx_uae_service -lsgx_launch -lsgx_epid -lsgx_quote_ex" \
+    CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service" \
     go build -o app
 
 # Set up Occlum
 RUN mkdir -p occlum_instance/image/bin && \
     mkdir -p occlum_instance/image/lib && \
     cp app occlum_instance/image/bin/ && \
-    cp enclave/libseal.a occlum_instance/image/lib/
+    cp enclave/libseal.so occlum_instance/image/lib/
 
 # Build Occlum image
 RUN cd occlum_instance && \
