@@ -38,6 +38,10 @@ RUN cd enclave && \
         -lsgx_tprotected_fs \
         -lsgx_tstdc \
         -lsgx_tservice \
+        -lsgx_urts \
+        -lsgx_uae_service \
+        -lsgx_ukey_exchange \
+        -lsgx_uprotected_fs \
         -Wl,--no-whole-archive \
         -Wl,--allow-multiple-definition \
         -Wl,--no-as-needed \
@@ -48,7 +52,16 @@ RUN cd enclave && \
         -lsgx_tcxx \
         -lsgx_tcrypto \
         -lsgx_trts \
-        -Wl,--end-group
+        -lsgx_tprotected_fs \
+        -lsgx_tkey_exchange \
+        -lsgx_urts \
+        -lsgx_uae_service \
+        -lsgx_ukey_exchange \
+        -lsgx_uprotected_fs \
+        -Wl,--end-group \
+        -lm \
+        -ldl \
+        -pthread
 
 # Build the Go application
 RUN go mod init occlum-go-seal && \
