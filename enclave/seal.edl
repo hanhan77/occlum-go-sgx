@@ -4,16 +4,16 @@ enclave {
 
     trusted {
         public sgx_status_t seal_data(
-            [in, size=in_len] const uint8_t in_data[in_len],
+            [in, size=in_len] const uint8_t* in_data,
             size_t in_len,
-            [out, size=*out_len] uint8_t out_data[*out_len],
+            [out, size=*out_len] uint8_t* out_data,
             [in, out] size_t* out_len
         );
 
         public sgx_status_t unseal_data(
-            [in, size=in_len] const uint8_t in_data[in_len],
+            [in, size=in_len] const uint8_t* in_data,
             size_t in_len,
-            [out, size=*out_len] uint8_t out_data[*out_len],
+            [out, size=*out_len] uint8_t* out_data,
             [in, out] size_t* out_len
         );
     };
