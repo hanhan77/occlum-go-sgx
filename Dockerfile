@@ -38,20 +38,7 @@ RUN cd enclave && \
         -I/opt/intel/sgxsdk/include \
         -I/opt/intel/sgxsdk/include/tlibc \
         -I/opt/intel/sgxsdk/include/linux && \
-    g++ -shared -o libseal.so seal.o seal_t.o \
-        -L/opt/intel/sgxsdk/lib64 \
-        -Wl,--start-group \
-        -lsgx_trts \
-        -lsgx_tcrypto \
-        -lsgx_tprotected_fs \
-        -lsgx_tservice \
-        -lsgx_tstdc \
-        -lsgx_tcxx \
-        -lsgx_tkey_exchange \
-        -Wl,--end-group \
-        -lm \
-        -ldl \
-        -pthread
+    ar rcs libseal.a seal.o seal_t.o
 
 # Build the Go application
 RUN go mod init occlum-go-seal && \
@@ -64,7 +51,7 @@ RUN go mod init occlum-go-seal && \
 RUN mkdir -p occlum_instance/image/bin && \
     mkdir -p occlum_instance/image/lib && \
     cp app occlum_instance/image/bin/ && \
-    cp enclave/libseal.so occlum_instance/image/lib/
+    cp enclave/libseal.a occlum_instance/image/lib/
 
 # Build Occlum image
 RUN cd occlum_instance && \
