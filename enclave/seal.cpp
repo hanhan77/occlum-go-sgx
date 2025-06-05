@@ -29,7 +29,10 @@ int seal_data(const uint8_t* in_data, size_t in_len, uint8_t** out_data, size_t*
 
     // Get the sealing key
     sgx_key_128bit_t key;
-    if (sgx_get_key(&key) != SGX_SUCCESS) {
+    sgx_key_request_t key_request = {0};
+    key_request.key_name = SGX_KEYSELECT_SEAL;
+    key_request.key_policy = SGX_KEYPOLICY_MRENCLAVE;
+    if (sgx_get_key(&key_request, &key) != SGX_SUCCESS) {
         free(sealed_data);
         return -1;
     }
@@ -71,7 +74,10 @@ int unseal_data(const uint8_t* in_data, size_t in_len, uint8_t** out_data, size_
 
     // Get the sealing key
     sgx_key_128bit_t key;
-    if (sgx_get_key(&key) != SGX_SUCCESS) {
+    sgx_key_request_t key_request = {0};
+    key_request.key_name = SGX_KEYSELECT_SEAL;
+    key_request.key_policy = SGX_KEYPOLICY_MRENCLAVE;
+    if (sgx_get_key(&key_request, &key) != SGX_SUCCESS) {
         free(unsealed_data);
         return -1;
     }
