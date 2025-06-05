@@ -30,11 +30,25 @@ RUN cd enclave && \
     g++ -c seal_t.c -o seal_t.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
     g++ -o seal_enclave seal.o seal_t.o \
         -L/opt/intel/sgxsdk/lib64 \
+        -Wl,--whole-archive \
         -lsgx_trts \
         -lsgx_tcrypto \
         -lsgx_tcxx \
         -lsgx_tkey_exchange \
-        -lsgx_tprotected_fs
+        -lsgx_tprotected_fs \
+        -lsgx_tstdc \
+        -lsgx_tservice \
+        -Wl,--no-whole-archive \
+        -Wl,--allow-multiple-definition \
+        -Wl,--no-as-needed \
+        -Wl,--export-dynamic \
+        -Wl,--start-group \
+        -lsgx_tservice \
+        -lsgx_tstdc \
+        -lsgx_tcxx \
+        -lsgx_tcrypto \
+        -lsgx_trts \
+        -Wl,--end-group
 
 # Build the Go application
 RUN go mod init occlum-go-seal && \
