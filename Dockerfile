@@ -40,20 +40,13 @@ RUN cd enclave && \
         -I/opt/intel/sgxsdk/include/linux && \
     g++ -shared -o libseal.so seal.o seal_t.o \
         -L/opt/intel/sgxsdk/lib64 \
-        -Wl,--whole-archive \
+        -Wl,--start-group \
         -lsgx_trts \
         -lsgx_tcrypto \
         -lsgx_tprotected_fs \
-        -lsgx_tstdc \
-        -lsgx_tservice \
-        -Wl,--no-whole-archive \
-        -Wl,--start-group \
         -lsgx_tservice \
         -lsgx_tstdc \
         -lsgx_tcxx \
-        -lsgx_tcrypto \
-        -lsgx_trts \
-        -lsgx_tprotected_fs \
         -lsgx_tkey_exchange \
         -Wl,--end-group \
         -lm \
