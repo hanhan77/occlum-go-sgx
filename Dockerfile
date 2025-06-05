@@ -26,9 +26,9 @@ COPY . .
 # Build the enclave using host's SGX SDK
 RUN cd enclave && \
     /opt/intel/sgxsdk/bin/x64/sgx_edger8r --trusted seal.edl --search-path /opt/intel/sgxsdk/include && \
-    g++ -c seal.cpp -o seal.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
-    g++ -c seal_t.c -o seal_t.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
-    g++ -o seal_enclave seal.o seal_t.o \
+    g++ -fPIC -c seal.cpp -o seal.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
+    g++ -fPIC -c seal_t.c -o seal_t.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
+    g++ -shared -o libseal.so seal.o seal_t.o \
         -L/opt/intel/sgxsdk/lib64 \
         -Wl,--whole-archive \
         -lsgx_trts \
@@ -38,10 +38,6 @@ RUN cd enclave && \
         -lsgx_tprotected_fs \
         -lsgx_tstdc \
         -lsgx_tservice \
-        -lsgx_urts \
-        -lsgx_uae_service \
-        -lsgx_ukey_exchange \
-        -lsgx_uprotected_fs \
         -Wl,--no-whole-archive \
         -Wl,--allow-multiple-definition \
         -Wl,--no-as-needed \
@@ -54,14 +50,12 @@ RUN cd enclave && \
         -lsgx_trts \
         -lsgx_tprotected_fs \
         -lsgx_tkey_exchange \
-        -lsgx_urts \
-        -lsgx_uae_service \
-        -lsgx_ukey_exchange \
-        -lsgx_uprotected_fs \
         -Wl,--end-group \
         -lm \
         -ldl \
-        -pthread
+        -pthread \
+        -D__USE_GNU \
+        -D_GNU_SOURCE
 
 # Build the Go application
 RUN go mod init occlum-go-seal && \
@@ -72,7 +66,7 @@ RUN go mod init occlum-go-seal && \
 RUN mkdir -p occlum_instance/image/bin && \
     mkdir -p occlum_instance/image/lib && \
     cp app occlum_instance/image/bin/ && \
-    cp enclave/seal_enclave occlum_instance/image/bin/
+    cp enclave/libseal.so occlum_instance/image/lib/
 
 # Build Occlum image
 RUN cd occlum_instance && \
