@@ -15,15 +15,6 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     pkg-config
 
-# Install Go
-RUN wget https://go.dev/dl/go1.20.5.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go1.20.5.linux-amd64.tar.gz && \
-    rm go1.20.5.linux-amd64.tar.gz
-ENV PATH=$PATH:/usr/local/go/bin
-ENV GOROOT=/usr/local/go
-ENV GOPATH=/root/go
-ENV PATH=$PATH:$GOPATH/bin
-
 # Set up workspace
 WORKDIR /root/occlum-go-seal
 COPY . .
@@ -44,8 +35,7 @@ RUN cd enclave && \
     ar rcs libseal.a seal.o seal_t.o
 
 # Build the Go application
-RUN go version && \
-    go mod tidy && \
+RUN go mod tidy && \
     CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include" \
     CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal" \
     go build -o app
