@@ -33,11 +33,12 @@ RUN cd enclave && \
         -Wl,--whole-archive \
         -lsgx_trts \
         -lsgx_tcrypto \
+        -Wl,--no-whole-archive \
+        -Wl,--allow-multiple-definition \
+        -Wl,--no-as-needed \
         -lsgx_tcxx \
         -lsgx_tkey_exchange \
-        -lsgx_tprotected_fs \
-        -Wl,--no-whole-archive \
-        -Wl,--allow-multiple-definition
+        -lsgx_tprotected_fs
 
 # Build the Go application
 RUN go mod init occlum-go-seal && \
