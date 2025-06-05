@@ -44,13 +44,7 @@ RUN cd enclave && \
     echo "Linking with debug info:" && \
     g++ -shared -o libseal.so seal.o seal_t.o \
         -L/opt/intel/sgxsdk/lib64 \
-        -Wl,--whole-archive \
-        -lsgx_trts \
-        -lsgx_tcrypto \
-        -lsgx_tprotected_fs \
-        -lsgx_tstdc \
-        -lsgx_tservice \
-        -Wl,--no-whole-archive \
+        -Wl,--no-undefined \
         -Wl,--allow-multiple-definition \
         -Wl,--no-as-needed \
         -Wl,--export-dynamic \
