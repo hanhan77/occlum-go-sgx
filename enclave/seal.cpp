@@ -9,97 +9,57 @@
 #define SEAL_IV_SIZE 12
 #define SEAL_TAG_SIZE 16
 
-int seal_data(const uint8_t* in_data, size_t in_len, uint8_t** out_data, size_t* out_len) {
-    if (!in_data || !out_data || !out_len) {
-        return -1;
-    }
-
-    // Calculate the size needed for sealed data
-    size_t sealed_size = in_len + SEAL_IV_SIZE + SEAL_TAG_SIZE;
-    uint8_t* sealed_data = (uint8_t*)malloc(sealed_size);
-    if (!sealed_data) {
-        return -1;
-    }
-
-    // Generate a random IV
-    if (sgx_read_rand(sealed_data, SEAL_IV_SIZE) != SGX_SUCCESS) {
-        free(sealed_data);
-        return -1;
-    }
-
-    // Get the sealing key
-    sgx_key_128bit_t key;
-    sgx_key_request_t key_request = {0};
-    key_request.key_name = SGX_KEYSELECT_SEAL;
-    key_request.key_policy = SGX_KEYPOLICY_MRENCLAVE;
-    if (sgx_get_key(&key_request, &key) != SGX_SUCCESS) {
-        free(sealed_data);
-        return -1;
-    }
-
-    // Encrypt the data
-    sgx_aes_gcm_128bit_tag_t tag;
-    if (sgx_rijndael128GCM_encrypt(&key,
-                                  in_data,
-                                  in_len,
-                                  sealed_data + SEAL_IV_SIZE,
-                                  sealed_data,
-                                  SEAL_IV_SIZE,
-                                  NULL,
-                                  0,
-                                  &tag) != SGX_SUCCESS) {
-        free(sealed_data);
-        return -1;
-    }
-
-    // Copy the tag
-    memcpy(sealed_data + SEAL_IV_SIZE + in_len, tag, SEAL_TAG_SIZE);
-
-    *out_data = sealed_data;
-    *out_len = sealed_size;
-    return 0;
+// Calculate the size needed for sealed data
+size_t get_sealed_data_size(size_t data_size) {
+    return sgx_calc_sealed_data_size(0, data_size);
 }
 
-int unseal_data(const uint8_t* in_data, size_t in_len, uint8_t** out_data, size_t* out_len) {
-    if (!in_data || !out_data || !out_len || in_len < SEAL_IV_SIZE + SEAL_TAG_SIZE) {
-        return -1;
+// Seal data within the enclave
+sgx_status_t seal_data(const uint8_t* data, 
+                      size_t data_size,
+                      uint8_t* sealed_data,
+                      size_t sealed_size) {
+    if (!data || !sealed_data) {
+        return SGX_ERROR_INVALID_PARAMETER;
     }
 
-    // Calculate the size of the unsealed data
-    size_t unsealed_size = in_len - SEAL_IV_SIZE - SEAL_TAG_SIZE;
-    uint8_t* unsealed_data = (uint8_t*)malloc(unsealed_size);
-    if (!unsealed_data) {
-        return -1;
+    // Verify the sealed data size
+    size_t required_size = get_sealed_data_size(data_size);
+    if (sealed_size < required_size) {
+        return SGX_ERROR_INVALID_PARAMETER;
     }
 
-    // Get the sealing key
-    sgx_key_128bit_t key;
-    sgx_key_request_t key_request = {0};
-    key_request.key_name = SGX_KEYSELECT_SEAL;
-    key_request.key_policy = SGX_KEYPOLICY_MRENCLAVE;
-    if (sgx_get_key(&key_request, &key) != SGX_SUCCESS) {
-        free(unsealed_data);
-        return -1;
+    // Seal the data
+    return sgx_seal_data(0, NULL, data_size, data, sealed_size, (sgx_sealed_data_t*)sealed_data);
+}
+
+// Unseal data within the enclave
+sgx_status_t unseal_data(const uint8_t* sealed_data,
+                        size_t sealed_size,
+                        uint8_t* data,
+                        size_t data_size) {
+    if (!sealed_data || !data) {
+        return SGX_ERROR_INVALID_PARAMETER;
     }
 
-    // Decrypt the data
-    sgx_aes_gcm_128bit_tag_t tag;
-    memcpy(tag, in_data + SEAL_IV_SIZE + unsealed_size, SEAL_TAG_SIZE);
-
-    if (sgx_rijndael128GCM_decrypt(&key,
-                                  in_data + SEAL_IV_SIZE,
-                                  unsealed_size,
-                                  unsealed_data,
-                                  in_data,
-                                  SEAL_IV_SIZE,
-                                  NULL,
-                                  0,
-                                  &tag) != SGX_SUCCESS) {
-        free(unsealed_data);
-        return -1;
+    // Get the size of the unsealed data
+    uint32_t mac_text_len = 0;
+    uint32_t decrypted_text_len = 0;
+    sgx_status_t ret = sgx_get_add_mac_txt_len((const sgx_sealed_data_t*)sealed_data, &mac_text_len);
+    if (ret != SGX_SUCCESS) {
+        return ret;
     }
 
-    *out_data = unsealed_data;
-    *out_len = unsealed_size;
-    return 0;
+    ret = sgx_get_encrypt_txt_len((const sgx_sealed_data_t*)sealed_data, &decrypted_text_len);
+    if (ret != SGX_SUCCESS) {
+        return ret;
+    }
+
+    // Verify the data size
+    if (data_size < decrypted_text_len) {
+        return SGX_ERROR_INVALID_PARAMETER;
+    }
+
+    // Unseal the data
+    return sgx_unseal_data((const sgx_sealed_data_t*)sealed_data, NULL, &mac_text_len, data, &decrypted_text_len);
 } 

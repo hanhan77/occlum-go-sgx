@@ -1,8 +1,7 @@
 FROM occlum/occlum:0.29.3-ubuntu20.04
 
-# Remove SGX repository and install build dependencies
-RUN rm -f /etc/apt/sources.list.d/intel-sgx.list && \
-    apt-get update && apt-get install -y \
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
     build-essential \
     gcc \
     g++ \
@@ -23,27 +22,25 @@ ENV PATH=$PATH:/usr/local/go/bin
 WORKDIR /root/occlum-go-seal
 COPY . .
 
-# Build the enclave using host's SGX SDK
+# Set up SGX SDK environment
+ENV SGX_SDK=/opt/intel/sgxsdk
+ENV PATH=$PATH:$SGX_SDK/bin:$SGX_SDK/bin/x64
+ENV PKG_CONFIG_PATH=$SGX_SDK/pkgconfig
+ENV LD_LIBRARY_PATH=$SGX_SDK/sdk_libs
+
+# Build the enclave
 RUN cd enclave && \
-    /opt/intel/sgxsdk/bin/x64/sgx_edger8r --trusted seal.edl --search-path /opt/intel/sgxsdk/include && \
-    g++ -fPIC -c seal.cpp -o seal.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
-    g++ -fPIC -c seal_t.c -o seal_t.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
-    echo "Checking object files:" && \
-    nm -a seal.o && \
-    nm -a seal_t.o && \
-    echo "Checking SGX libraries:" && \
-    ar t /opt/intel/sgxsdk/lib64/libsgx_tcxx.a && \
-    nm -a /opt/intel/sgxsdk/lib64/libsgx_tcxx.a | grep -i version && \
-    nm -a /opt/intel/sgxsdk/lib64/libsgx_trts.a | grep -i imagebase && \
-    echo "Creating version script:" && \
-    echo "{" > seal.lds && \
-    echo "  global: *;" >> seal.lds && \
-    echo "  local: *;" >> seal.lds && \
-    echo "};" >> seal.lds && \
-    cat seal.lds && \
-    echo "Linking with debug info:" && \
-    g++ -o libseal.a seal.o seal_t.o \
-        -L/opt/intel/sgxsdk/lib64 \
+    $SGX_SDK/bin/x64/sgx_edger8r --trusted seal.edl --search-path $SGX_SDK/include && \
+    g++ -fPIC -c seal.cpp -o seal.o \
+        -I$SGX_SDK/include \
+        -I$SGX_SDK/include/tlibc \
+        -I$SGX_SDK/include/libcxx \
+        -I$SGX_SDK/include/stdc++ && \
+    g++ -fPIC -c seal_t.c -o seal_t.o \
+        -I$SGX_SDK/include \
+        -I$SGX_SDK/include/tlibc && \
+    g++ -shared -o libseal.so seal.o seal_t.o \
+        -L$SGX_SDK/lib64 \
         -Wl,--whole-archive \
         -lsgx_trts \
         -lsgx_tcrypto \
@@ -62,26 +59,20 @@ RUN cd enclave && \
         -Wl,--end-group \
         -lm \
         -ldl \
-        -pthread \
-        -D__USE_GNU \
-        -D_GNU_SOURCE \
-        -DSGX_TRTS \
-        -Wl,-Bsymbolic \
-        -Wl,--version-script=seal.lds \
-        -Wl,--verbose && \
-    echo "Checking final library:" && \
-    nm -a libseal.a | grep -i version
+        -pthread
 
 # Build the Go application
 RUN go mod init occlum-go-seal && \
     go mod tidy && \
+    CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I$SGX_SDK/include" \
+    CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal" \
     go build -o app
 
 # Set up Occlum
 RUN mkdir -p occlum_instance/image/bin && \
     mkdir -p occlum_instance/image/lib && \
     cp app occlum_instance/image/bin/ && \
-    cp enclave/libseal.a occlum_instance/image/lib/
+    cp enclave/libseal.so occlum_instance/image/lib/
 
 # Build Occlum image
 RUN cd occlum_instance && \

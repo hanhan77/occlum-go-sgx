@@ -43,6 +43,19 @@
                     }
                 ]
             }
+        },
+        {
+            "target": "/data",
+            "type": "unionfs",
+            "options": {
+                "layers": [
+                    {
+                        "target": "/data",
+                        "type": "encrypted",
+                        "source": "image/data"
+                    }
+                ]
+            }
         }
     ]
 }
