@@ -37,7 +37,8 @@ RUN cd enclave && \
         -I/opt/intel/sgxsdk/include \
         -I/opt/intel/sgxsdk/include/tlibc \
         -I/opt/intel/sgxsdk/include/linux && \
-    g++ -shared -o libseal.so seal.o seal_t.o seal_u.o -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service
+    g++ -shared -o libseal.so seal_u.o -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service && \
+    ar rcs libseal.a seal.o seal_t.o
 
 # Build the Go application
 RUN go mod tidy && \
@@ -49,7 +50,8 @@ RUN go mod tidy && \
 RUN mkdir -p occlum_instance/image/bin && \
     mkdir -p occlum_instance/image/lib && \
     cp app occlum_instance/image/bin/ && \
-    cp enclave/libseal.so occlum_instance/image/lib/
+    cp enclave/libseal.so occlum_instance/image/lib/ && \
+    cp enclave/libseal.a occlum_instance/image/lib/
 
 # Build Occlum image
 RUN cd occlum_instance && \
