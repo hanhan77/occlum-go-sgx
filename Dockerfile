@@ -27,6 +27,7 @@ COPY . .
 
 # Build the enclave
 RUN cd enclave && \
+    /opt/intel/sgxsdk/bin/x64/sgx_edger8r --trusted seal.edl --search-path /opt/intel/sgxsdk/include && \
     g++ -fPIC -c seal.cpp -o seal.o \
         -I/opt/intel/sgxsdk/include \
         -I/opt/intel/sgxsdk/include/tlibc \
