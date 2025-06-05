@@ -1,6 +1,6 @@
 enclave {
-    from "sgx_tstdc.edl" import sgx_status_t;
-    from "sgx_tcrypto.edl" import sgx_aes_gcm_128bit_tag_t;
+    from "sgx_tstdc.edl" import *;
+    include "stdint.h"
 
     trusted {
         public sgx_status_t seal_data([out, size=data_size] uint8_t* sealed_blob, uint32_t data_size);
