@@ -26,8 +26,8 @@ COPY . .
 # Build the enclave using host's SGX SDK
 RUN cd enclave && \
     /opt/intel/sgxsdk/bin/x64/sgx_edger8r --trusted seal.edl --search-path /opt/intel/sgxsdk/include && \
-    g++ -c seal.cpp -o seal.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
-    g++ -c seal_t.c -o seal_t.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
+    g++ -fPIC -c seal.cpp -o seal.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
+    g++ -fPIC -c seal_t.c -o seal_t.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
     g++ -shared -o libseal.so seal.o seal_t.o -L/opt/intel/sgxsdk/lib64 -lsgx_trts -lsgx_tcrypto
 
 # Build the Go application
