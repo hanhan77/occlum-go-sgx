@@ -44,17 +44,8 @@ sgx_status_t unseal_data(const uint8_t* sealed_data,
     }
 
     // Get the size of the unsealed data
-    uint32_t mac_text_len = 0;
-    uint32_t decrypted_text_len = 0;
-    sgx_status_t ret = sgx_get_add_mac_txt_len((const sgx_sealed_data_t*)sealed_data, &mac_text_len);
-    if (ret != SGX_SUCCESS) {
-        return ret;
-    }
-
-    ret = sgx_get_encrypt_txt_len((const sgx_sealed_data_t*)sealed_data, &decrypted_text_len);
-    if (ret != SGX_SUCCESS) {
-        return ret;
-    }
+    uint32_t mac_text_len = sgx_get_add_mac_txt_len((const sgx_sealed_data_t*)sealed_data);
+    uint32_t decrypted_text_len = sgx_get_encrypt_txt_len((const sgx_sealed_data_t*)sealed_data);
 
     // Verify the data size
     if (data_size < decrypted_text_len) {
