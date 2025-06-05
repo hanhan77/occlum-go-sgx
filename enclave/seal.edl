@@ -1,6 +1,6 @@
 enclave {
-    from "sgx_tstdc.edl" import *;
-    from "sgx_tcrypto.edl" import *;
+    from "sgx_tstdc.edl" import sgx_status_t;
+    from "sgx_tcrypto.edl" import sgx_aes_gcm_128bit_tag_t;
 
     trusted {
         public sgx_status_t seal_data(
