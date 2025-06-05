@@ -1,7 +1,8 @@
 FROM occlum/occlum:0.29.3-ubuntu20.04
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
+# Remove SGX repository and install build dependencies
+RUN rm -f /etc/apt/sources.list.d/intel-sgx.list && \
+    apt-get update && apt-get install -y \
     build-essential \
     gcc \
     g++ \
