@@ -42,12 +42,15 @@ RUN cd enclave && \
     echo "};" >> seal.lds && \
     cat seal.lds && \
     echo "Linking with debug info:" && \
-    g++ -shared -o libseal.so seal.o seal_t.o \
+    g++ -o libseal.a seal.o seal_t.o \
         -L/opt/intel/sgxsdk/lib64 \
-        -Wl,--no-undefined \
-        -Wl,--allow-multiple-definition \
-        -Wl,--no-as-needed \
-        -Wl,--export-dynamic \
+        -Wl,--whole-archive \
+        -lsgx_trts \
+        -lsgx_tcrypto \
+        -lsgx_tprotected_fs \
+        -lsgx_tstdc \
+        -lsgx_tservice \
+        -Wl,--no-whole-archive \
         -Wl,--start-group \
         -lsgx_tservice \
         -lsgx_tstdc \
@@ -62,11 +65,12 @@ RUN cd enclave && \
         -pthread \
         -D__USE_GNU \
         -D_GNU_SOURCE \
+        -DSGX_TRTS \
         -Wl,-Bsymbolic \
         -Wl,--version-script=seal.lds \
         -Wl,--verbose && \
     echo "Checking final library:" && \
-    nm -a libseal.so | grep -i version
+    nm -a libseal.a | grep -i version
 
 # Build the Go application
 RUN go mod init occlum-go-seal && \
@@ -77,7 +81,7 @@ RUN go mod init occlum-go-seal && \
 RUN mkdir -p occlum_instance/image/bin && \
     mkdir -p occlum_instance/image/lib && \
     cp app occlum_instance/image/bin/ && \
-    cp enclave/libseal.so occlum_instance/image/lib/
+    cp enclave/libseal.a occlum_instance/image/lib/
 
 # Build Occlum image
 RUN cd occlum_instance && \
