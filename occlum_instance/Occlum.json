@@ -1,0 +1,48 @@
+{
+    "resource_limits": {
+        "kernel_space_heap_size": "64MB",
+        "kernel_space_stack_size": "8MB",
+        "max_num_of_threads": 32
+    },
+    "process": {
+        "default_stack_size": "8MB",
+        "default_heap_size": "32MB",
+        "default_mmap_size": "64MB"
+    },
+    "entry_points": [
+        "/bin/app"
+    ],
+    "env": {
+        "default": [
+            "OCCLUM=yes"
+        ]
+    },
+    "mount": [
+        {
+            "target": "/bin",
+            "type": "unionfs",
+            "options": {
+                "layers": [
+                    {
+                        "target": "/bin",
+                        "type": "encrypted",
+                        "source": "image/bin"
+                    }
+                ]
+            }
+        },
+        {
+            "target": "/lib",
+            "type": "unionfs",
+            "options": {
+                "layers": [
+                    {
+                        "target": "/lib",
+                        "type": "encrypted",
+                        "source": "image/lib"
+                    }
+                ]
+            }
+        }
+    ]
+}
