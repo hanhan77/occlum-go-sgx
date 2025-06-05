@@ -41,8 +41,7 @@ RUN cd enclave && \
     ar rcs libseal.a seal.o seal_t.o
 
 # Build the Go application
-RUN go mod init occlum-go-seal && \
-    go mod tidy && \
+RUN go mod tidy && \
     CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include" \
     CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal" \
     go build -o app
