@@ -22,25 +22,18 @@ ENV PATH=$PATH:/usr/local/go/bin
 WORKDIR /root/occlum-go-seal
 COPY . .
 
-# Set up SGX SDK environment
-ENV SGX_SDK=/opt/intel/sgxsdk
-ENV PATH=$PATH:$SGX_SDK/bin:$SGX_SDK/bin/x64
-ENV PKG_CONFIG_PATH=$SGX_SDK/pkgconfig
-ENV LD_LIBRARY_PATH=$SGX_SDK/sdk_libs
-
 # Build the enclave
 RUN cd enclave && \
-    $SGX_SDK/bin/x64/sgx_edger8r --trusted seal.edl --search-path $SGX_SDK/include && \
     g++ -fPIC -c seal.cpp -o seal.o \
-        -I$SGX_SDK/include \
-        -I$SGX_SDK/include/tlibc \
-        -I$SGX_SDK/include/libcxx \
-        -I$SGX_SDK/include/stdc++ && \
+        -I/opt/intel/sgxsdk/include \
+        -I/opt/intel/sgxsdk/include/tlibc \
+        -I/opt/intel/sgxsdk/include/libcxx \
+        -I/opt/intel/sgxsdk/include/stdc++ && \
     g++ -fPIC -c seal_t.c -o seal_t.o \
-        -I$SGX_SDK/include \
-        -I$SGX_SDK/include/tlibc && \
+        -I/opt/intel/sgxsdk/include \
+        -I/opt/intel/sgxsdk/include/tlibc && \
     g++ -shared -o libseal.so seal.o seal_t.o \
-        -L$SGX_SDK/lib64 \
+        -L/opt/intel/sgxsdk/lib64 \
         -Wl,--whole-archive \
         -lsgx_trts \
         -lsgx_tcrypto \
@@ -64,7 +57,7 @@ RUN cd enclave && \
 # Build the Go application
 RUN go mod init occlum-go-seal && \
     go mod tidy && \
-    CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I$SGX_SDK/include" \
+    CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include" \
     CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal" \
     go build -o app
 
