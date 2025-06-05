@@ -37,7 +37,7 @@ RUN cd enclave && \
 # Build the Go application
 RUN go mod tidy && \
     CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include" \
-    CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -lsgx_trts -lsgx_tservice -lsgx_tcrypto -lsgx_tstdc -lsgx_tcxx" \
+    CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -lsgx_trts -lsgx_tservice -lsgx_tcrypto -lsgx_tstdc -lsgx_tcxx -lsgx_urts -Wl,--whole-archive -lsgx_trts -Wl,--no-whole-archive -Wl,--no-as-needed -lsgx_urts -lsgx_uae_service" \
     go build -o app
 
 # Set up Occlum
