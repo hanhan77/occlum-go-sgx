@@ -37,7 +37,7 @@ RUN cd enclave && \
         -I/opt/intel/sgxsdk/include \
         -I/opt/intel/sgxsdk/include/tlibc \
         -I/opt/intel/sgxsdk/include/linux && \
-    g++ -shared -o libseal.so seal_u.o -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service
+    g++ -shared -o libseal.so seal.o seal_t.o seal_u.o -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service
 
 # Build the Go application
 RUN go mod tidy && \
