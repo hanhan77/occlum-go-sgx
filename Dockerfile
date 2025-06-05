@@ -22,6 +22,7 @@ COPY . .
 # Build the enclave
 RUN cd enclave && \
     /opt/intel/sgxsdk/bin/x64/sgx_edger8r --trusted seal.edl --search-path /opt/intel/sgxsdk/include && \
+    /opt/intel/sgxsdk/bin/x64/sgx_edger8r --untrusted seal.edl --search-path /opt/intel/sgxsdk/include && \
     g++ -fPIC -c seal.cpp -o seal.o \
         -I/opt/intel/sgxsdk/include \
         -I/opt/intel/sgxsdk/include/tlibc \
@@ -32,7 +33,11 @@ RUN cd enclave && \
         -I/opt/intel/sgxsdk/include \
         -I/opt/intel/sgxsdk/include/tlibc \
         -I/opt/intel/sgxsdk/include/linux && \
-    ar rcs libseal.a seal.o seal_t.o
+    g++ -fPIC -c seal_u.c -o seal_u.o \
+        -I/opt/intel/sgxsdk/include \
+        -I/opt/intel/sgxsdk/include/tlibc \
+        -I/opt/intel/sgxsdk/include/linux && \
+    ar rcs libseal.a seal.o seal_t.o seal_u.o
 
 # Build the Go application
 RUN go mod tidy && \
