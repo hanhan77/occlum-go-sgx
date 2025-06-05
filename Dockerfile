@@ -28,13 +28,24 @@ RUN cd enclave && \
     /opt/intel/sgxsdk/bin/x64/sgx_edger8r --trusted seal.edl --search-path /opt/intel/sgxsdk/include && \
     g++ -fPIC -c seal.cpp -o seal.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
     g++ -fPIC -c seal_t.c -o seal_t.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
+    echo "Checking object files:" && \
+    nm -D seal.o && \
+    nm -D seal_t.o && \
+    echo "Checking SGX libraries:" && \
+    nm -D /opt/intel/sgxsdk/lib64/libsgx_tcxx.a | grep sgx_tcxx_version && \
+    nm -D /opt/intel/sgxsdk/lib64/libsgx_trts.a | grep __ImageBase && \
+    echo "Creating version script:" && \
+    echo "{" > seal.lds && \
+    echo "  global: *;" >> seal.lds && \
+    echo "  local: *;" >> seal.lds && \
+    echo "};" >> seal.lds && \
+    cat seal.lds && \
+    echo "Linking with debug info:" && \
     g++ -shared -o libseal.so seal.o seal_t.o \
         -L/opt/intel/sgxsdk/lib64 \
         -Wl,--whole-archive \
         -lsgx_trts \
         -lsgx_tcrypto \
-        -lsgx_tcxx \
-        -lsgx_tkey_exchange \
         -lsgx_tprotected_fs \
         -lsgx_tstdc \
         -lsgx_tservice \
@@ -55,7 +66,12 @@ RUN cd enclave && \
         -ldl \
         -pthread \
         -D__USE_GNU \
-        -D_GNU_SOURCE
+        -D_GNU_SOURCE \
+        -Wl,-Bsymbolic \
+        -Wl,--version-script=seal.lds \
+        -Wl,--verbose && \
+    echo "Checking final library:" && \
+    nm -D libseal.so | grep sgx_tcxx_version
 
 # Build the Go application
 RUN go mod init occlum-go-seal && \
