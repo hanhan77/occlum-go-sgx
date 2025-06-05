@@ -29,11 +29,12 @@ RUN cd enclave && \
     g++ -fPIC -c seal.cpp -o seal.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
     g++ -fPIC -c seal_t.c -o seal_t.o -I/opt/intel/sgxsdk/include -I/opt/intel/sgxsdk/include/tlibc && \
     echo "Checking object files:" && \
-    nm -D seal.o && \
-    nm -D seal_t.o && \
+    nm -a seal.o && \
+    nm -a seal_t.o && \
     echo "Checking SGX libraries:" && \
-    nm -D /opt/intel/sgxsdk/lib64/libsgx_tcxx.a | grep sgx_tcxx_version && \
-    nm -D /opt/intel/sgxsdk/lib64/libsgx_trts.a | grep __ImageBase && \
+    ar t /opt/intel/sgxsdk/lib64/libsgx_tcxx.a && \
+    nm -a /opt/intel/sgxsdk/lib64/libsgx_tcxx.a | grep -i version && \
+    nm -a /opt/intel/sgxsdk/lib64/libsgx_trts.a | grep -i imagebase && \
     echo "Creating version script:" && \
     echo "{" > seal.lds && \
     echo "  global: *;" >> seal.lds && \
@@ -71,7 +72,7 @@ RUN cd enclave && \
         -Wl,--version-script=seal.lds \
         -Wl,--verbose && \
     echo "Checking final library:" && \
-    nm -D libseal.so | grep sgx_tcxx_version
+    nm -a libseal.so | grep -i version
 
 # Build the Go application
 RUN go mod init occlum-go-seal && \
