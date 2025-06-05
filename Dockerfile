@@ -31,10 +31,12 @@ RUN cd enclave && \
         -I/opt/intel/sgxsdk/include \
         -I/opt/intel/sgxsdk/include/tlibc \
         -I/opt/intel/sgxsdk/include/libcxx \
-        -I/opt/intel/sgxsdk/include/stdc++ && \
+        -I/opt/intel/sgxsdk/include/stdc++ \
+        -I/opt/intel/sgxsdk/include/linux && \
     g++ -fPIC -c seal_t.c -o seal_t.o \
         -I/opt/intel/sgxsdk/include \
-        -I/opt/intel/sgxsdk/include/tlibc && \
+        -I/opt/intel/sgxsdk/include/tlibc \
+        -I/opt/intel/sgxsdk/include/linux && \
     g++ -shared -o libseal.so seal.o seal_t.o \
         -L/opt/intel/sgxsdk/lib64 \
         -Wl,--whole-archive \
