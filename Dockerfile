@@ -13,7 +13,8 @@ RUN apt-get update && apt-get install -y \
     git \
     wget \
     libssl-dev \
-    pkg-config
+    pkg-config \
+    libcppmicroservices4
 
 # Set up workspace
 WORKDIR /root/occlum-go-seal
