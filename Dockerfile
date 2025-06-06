@@ -1,4 +1,4 @@
-FROM occlum/occlum:0.26.3-ubuntu20.04
+FROM occlum/occlum:0.29.3-ubuntu20.04
 
 # Remove Intel SGX repository configuration
 RUN rm -f /etc/apt/sources.list.d/intel-sgx.list
