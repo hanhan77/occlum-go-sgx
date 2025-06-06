@@ -1,17 +1,17 @@
 {
     "resource_limits": {
-        "user_space_size": "512MB",
-        "kernel_space_heap_size": "32MB",
+        "user_space_size": "256MB",
+        "kernel_space_heap_size": "16MB",
         "kernel_space_stack_size": "1MB",
-        "max_num_of_threads": 32
+        "max_num_of_threads": 16
     },
     "process": {
-        "default_stack_size": "8MB",
-        "default_heap_size": "32MB",
-        "default_mmap_size": "128MB"
+        "default_stack_size": "4MB",
+        "default_heap_size": "16MB",
+        "default_mmap_size": "64MB"
     },
     "entry_points": [
-        "/bin"
+        "/bin/app"
     ],
     "env": {
         "default": [
@@ -60,6 +60,7 @@
         }
     ],
     "security": {
-        "enable_fsgsbase": false
+        "enable_fsgsbase": false,
+        "enable_kss": false
     }
 }
