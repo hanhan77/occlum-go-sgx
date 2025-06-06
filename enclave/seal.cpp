@@ -12,16 +12,19 @@
 #define SEAL_TAG_SIZE 16
 
 // Calculate the size needed for sealed data
-sgx_status_t get_sealed_data_size(const uint8_t *data, uint32_t data_size, uint32_t *sealed_data_size) {
+sgx_status_t SGX_CDECL get_sealed_data_size(sgx_status_t* retval, const uint8_t* data, uint32_t data_size, uint32_t* sealed_data_size) {
     if (!data || !sealed_data_size) {
+        *retval = SGX_ERROR_INVALID_PARAMETER;
         return SGX_ERROR_INVALID_PARAMETER;
     }
     
     *sealed_data_size = sgx_calc_sealed_data_size(0, data_size);
     if (*sealed_data_size == UINT32_MAX) {
+        *retval = SGX_ERROR_UNEXPECTED;
         return SGX_ERROR_UNEXPECTED;
     }
     
+    *retval = SGX_SUCCESS;
     return SGX_SUCCESS;
 }
 
