@@ -1,16 +1,17 @@
 {
     "resource_limits": {
-        "kernel_space_heap_size": "64MB",
-        "kernel_space_stack_size": "8MB",
+        "user_space_size": "512MB",
+        "kernel_space_heap_size": "32MB",
+        "kernel_space_stack_size": "1MB",
         "max_num_of_threads": 32
     },
     "process": {
         "default_stack_size": "8MB",
         "default_heap_size": "32MB",
-        "default_mmap_size": "64MB"
+        "default_mmap_size": "128MB"
     },
     "entry_points": [
-        "/bin/app"
+        "/bin"
     ],
     "env": {
         "default": [
@@ -25,8 +26,8 @@
                 "layers": [
                     {
                         "target": "/bin",
-                        "type": "encrypted",
-                        "source": "image/bin"
+                        "type": "sefs",
+                        "source": "./image/bin"
                     }
                 ]
             }
@@ -38,8 +39,8 @@
                 "layers": [
                     {
                         "target": "/lib",
-                        "type": "encrypted",
-                        "source": "image/lib"
+                        "type": "sefs",
+                        "source": "./image/lib"
                     }
                 ]
             }
@@ -57,5 +58,8 @@
                 ]
             }
         }
-    ]
+    ],
+    "security": {
+        "enable_fsgsbase": false
+    }
 }
