@@ -1,11 +1,7 @@
 #include "seal.h"
 #include "seal_t.h"
-#include <sgx_tcrypto.h>
-#include <sgx_trts.h>
-#include <sgx_utils.h>
 #include <sgx_tseal.h>
 #include <string.h>
-#include <stdlib.h>
 
 #define SEAL_KEY_SIZE 16
 #define SEAL_IV_SIZE 12
