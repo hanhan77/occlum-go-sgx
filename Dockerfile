@@ -53,8 +53,9 @@ RUN mkdir -p occlum_instance/image/bin && \
     cp enclave/libseal.so occlum_instance/image/lib/ && \
     cp enclave/libseal.a occlum_instance/image/lib/
 
-# Build Occlum image
+# Initialize and build Occlum image
 RUN cd occlum_instance && \
+    occlum init && \
     occlum build
 
 # Set the entry point
