@@ -15,7 +15,8 @@
     ],
     "env": {
         "default": [
-            "OCCLUM=yes"
+            "OCCLUM=yes",
+            "OCCLUM_DISABLE_FSGSBASE=1"
         ]
     },
     "mount": [
@@ -61,6 +62,8 @@
     ],
     "security": {
         "enable_fsgsbase": false,
-        "enable_kss": false
+        "enable_kss": false,
+        "enable_kss_verify": false,
+        "enable_kss_verify_remote": false
     }
 }

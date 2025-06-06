@@ -62,7 +62,12 @@ RUN cd occlum_instance && \
 WORKDIR /root/occlum-go-seal/occlum_instance
 
 # Create startup script
-RUN printf '#!/bin/bash\nexport OCCLUM_DISABLE_FSGSBASE=1\nocclum run /bin/app\n' > /start.sh && \
+RUN printf '#!/bin/bash\n\
+set -e\n\
+export OCCLUM_DISABLE_FSGSBASE=1\n\
+export OCCLUM_DISABLE_KSS=1\n\
+cd /root/occlum-go-seal/occlum_instance\n\
+exec occlum run /bin/app\n' > /start.sh && \
     chmod +x /start.sh
 
-ENTRYPOINT ["/start.sh"] 
+ENTRYPOINT ["/bin/bash", "/start.sh"] 
