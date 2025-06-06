@@ -1,4 +1,4 @@
-FROM occlum/occlum:0.29.3-ubuntu20.04
+FROM occlum/occlum:0.31.0-ubuntu20.04
 
 # Remove Intel SGX repository configuration
 RUN rm -f /etc/apt/sources.list.d/intel-sgx.list
@@ -67,7 +67,7 @@ set -e\n\
 echo "Checking CPU features..."\n\
 cat /proc/cpuinfo | grep fsgsbase\n\
 echo "Starting AESM service..."\n\
-/usr/bin/aesm_service &\n\
+service aesmd start\n\
 sleep 2\n\
 echo "Running application..."\n\
 cd /root/occlum-go-seal/occlum_instance\n\
