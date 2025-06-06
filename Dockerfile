@@ -56,7 +56,7 @@ RUN mkdir -p occlum_instance/image/bin && \
 # Initialize and build Occlum image
 RUN cd occlum_instance && \
     occlum init && \
-    occlum build
+    occlum build --debug
 
 # Set the entry point
 WORKDIR /root/occlum-go-seal/occlum_instance
@@ -66,8 +66,10 @@ RUN printf '#!/bin/bash\n\
 set -e\n\
 export OCCLUM_DISABLE_FSGSBASE=1\n\
 export OCCLUM_DISABLE_KSS=1\n\
+export OCCLUM_DISABLE_HW_CHECK=1\n\
+export OCCLUM_DEBUG=1\n\
 cd /root/occlum-go-seal/occlum_instance\n\
-exec occlum run /bin/app\n' > /start.sh && \
+exec occlum run --debug /bin/app\n' > /start.sh && \
     chmod +x /start.sh
 
 ENTRYPOINT ["/bin/bash", "/start.sh"] 
