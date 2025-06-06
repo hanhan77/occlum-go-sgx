@@ -59,4 +59,5 @@ RUN cd occlum_instance && \
     occlum build
 
 # Set the entry point
+WORKDIR /root/occlum-go-seal/occlum_instance
 ENTRYPOINT ["occlum", "run", "/bin/app"] 
