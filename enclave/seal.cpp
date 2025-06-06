@@ -1,4 +1,5 @@
 #include "seal.h"
+#include "seal_t.h"
 #include <sgx_tcrypto.h>
 #include <sgx_trts.h>
 #include <sgx_utils.h>
@@ -13,6 +14,19 @@
 // Calculate the size needed for sealed data
 size_t get_sealed_data_size(size_t data_size) {
     return sgx_calc_sealed_data_size(0, data_size);
+}
+
+sgx_status_t get_sealed_data_size(const uint8_t *data, uint32_t data_size, uint32_t *sealed_data_size) {
+    if (!data || !sealed_data_size) {
+        return SGX_ERROR_INVALID_PARAMETER;
+    }
+    
+    *sealed_data_size = sgx_calc_sealed_data_size(0, data_size);
+    if (*sealed_data_size == UINT32_MAX) {
+        return SGX_ERROR_UNEXPECTED;
+    }
+    
+    return SGX_SUCCESS;
 }
 
 // Seal data within the enclave
