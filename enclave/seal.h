@@ -2,6 +2,7 @@
 #define SEAL_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include <sgx_error.h>
 
 #ifdef __cplusplus
@@ -15,7 +16,7 @@ sgx_status_t get_sealed_data_size(const uint8_t *data, uint32_t data_size, uint3
 sgx_status_t seal_data(uint8_t* sealed_blob, uint32_t data_size);
 
 // Unseal data within the enclave
-sgx_status_t unseal_data(const uint8_t* sealed_blob, size_t data_size);
+sgx_status_t unseal_data(const uint8_t* sealed_blob, uint32_t data_size);
 
 #ifdef __cplusplus
 }

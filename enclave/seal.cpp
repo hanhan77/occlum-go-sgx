@@ -36,9 +36,15 @@ sgx_status_t seal_data(uint8_t* sealed_blob, uint32_t data_size) {
 }
 
 // Unseal data within the enclave
-sgx_status_t unseal_data(const uint8_t* sealed_blob, size_t data_size) {
+sgx_status_t unseal_data(const uint8_t* sealed_blob, uint32_t data_size) {
     if (!sealed_blob) {
         return SGX_ERROR_INVALID_PARAMETER;
+    }
+
+    // Create a temporary buffer for the unsealed data
+    uint8_t* temp_buffer = new uint8_t[data_size];
+    if (!temp_buffer) {
+        return SGX_ERROR_OUT_OF_MEMORY;
     }
 
     // Get the size of the unsealed data
@@ -46,5 +52,13 @@ sgx_status_t unseal_data(const uint8_t* sealed_blob, size_t data_size) {
     uint32_t decrypted_text_len = sgx_get_encrypt_txt_len((const sgx_sealed_data_t*)sealed_blob);
 
     // Unseal the data
-    return sgx_unseal_data((const sgx_sealed_data_t*)sealed_blob, NULL, &mac_text_len, sealed_blob, &decrypted_text_len);
+    sgx_status_t ret = sgx_unseal_data((const sgx_sealed_data_t*)sealed_blob, NULL, &mac_text_len, temp_buffer, &decrypted_text_len);
+    
+    if (ret == SGX_SUCCESS) {
+        // Copy the unsealed data back to the input buffer
+        memcpy((void*)sealed_blob, temp_buffer, decrypted_text_len);
+    }
+
+    delete[] temp_buffer;
+    return ret;
 } 
