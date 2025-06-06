@@ -20,6 +20,11 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /root/occlum-go-seal
 COPY . .
 
+# Copy AESM library to system directory
+RUN mkdir -p /usr/lib && \
+    cp /opt/intel/sgx-aesm-service/aesm/libCppMicroServices.so.4.0.0 /usr/lib/ && \
+    ln -s /usr/lib/libCppMicroServices.so.4.0.0 /usr/lib/libCppMicroServices.so.4
+
 # Build the enclave
 RUN cd enclave && \
     /opt/intel/sgxsdk/bin/x64/sgx_edger8r --trusted seal.edl --search-path /opt/intel/sgxsdk/include && \
