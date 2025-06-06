@@ -1,4 +1,4 @@
-FROM occlum/occlum:0.29.3-ubuntu20.04
+FROM occlum/occlum:0.26.3-ubuntu20.04
 
 # Remove Intel SGX repository configuration
 RUN rm -f /etc/apt/sources.list.d/intel-sgx.list
@@ -64,10 +64,6 @@ WORKDIR /root/occlum-go-seal/occlum_instance
 # Create startup script
 RUN printf '#!/bin/bash\n\
 set -e\n\
-export OCCLUM_DISABLE_FSGSBASE=1\n\
-export OCCLUM_DISABLE_KSS=1\n\
-export OCCLUM_DISABLE_HW_CHECK=1\n\
-export OCCLUM_DEBUG=1\n\
 cd /root/occlum-go-seal/occlum_instance\n\
 exec occlum run /bin/app\n' > /start.sh && \
     chmod +x /start.sh
