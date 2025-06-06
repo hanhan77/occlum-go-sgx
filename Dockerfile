@@ -66,6 +66,10 @@ RUN printf '#!/bin/bash\n\
 set -e\n\
 echo "Checking CPU features..."\n\
 cat /proc/cpuinfo | grep fsgsbase\n\
+echo "Starting AESM service..."\n\
+/opt/intel/sgxpsw/aesm/aesm_service &\n\
+sleep 2\n\
+echo "Running application..."\n\
 cd /root/occlum-go-seal/occlum_instance\n\
 exec occlum run /bin/app\n' > /start.sh && \
     chmod +x /start.sh
