@@ -1,14 +1,14 @@
 {
     "resource_limits": {
-        "user_space_size": "256MB",
-        "kernel_space_heap_size": "16MB",
-        "kernel_space_stack_size": "1MB",
-        "max_num_of_threads": 16
+        "kernel_space_heap_size": "256MB",
+        "kernel_space_stack_size": "32MB",
+        "user_space_size": "3072MB",
+        "max_num_of_threads": 64
     },
     "process": {
-        "default_stack_size": "4MB",
-        "default_heap_size": "16MB",
-        "default_mmap_size": "64MB"
+        "default_stack_size": "32MB",
+        "default_heap_size": "128MB",
+        "default_mmap_size": "256MB"
     },
     "entry_points": [
         "/bin/app"
@@ -18,51 +18,39 @@
             "OCCLUM=yes"
         ]
     },
+    "metadata": {
+        "product_id": 0,
+        "version_number": 0,
+        "debuggable": true,
+        "enable_kss": false,
+        "family_id": {
+            "high": "0x0",
+            "low": "0x0"
+        },
+        "ext_prod_id": {
+            "high": "0x0",
+            "low": "0x0"
+        }
+    },
+    "feature": {
+        "amx": 0,
+        "pkru": 0,
+        "enable_edmm": false,
+        "enable_posix_shm": false
+    },
     "mount": [
         {
-            "target": "/bin",
+            "target": "/",
             "type": "unionfs",
             "options": {
                 "layers": [
                     {
-                        "target": "/bin",
+                        "target": "/",
                         "type": "sefs",
-                        "source": "./image/bin"
-                    }
-                ]
-            }
-        },
-        {
-            "target": "/lib",
-            "type": "unionfs",
-            "options": {
-                "layers": [
-                    {
-                        "target": "/lib",
-                        "type": "sefs",
-                        "source": "./image/lib"
-                    }
-                ]
-            }
-        },
-        {
-            "target": "/data",
-            "type": "unionfs",
-            "options": {
-                "layers": [
-                    {
-                        "target": "/data",
-                        "type": "encrypted",
-                        "source": "image/data"
+                        "source": "./image"
                     }
                 ]
             }
         }
-    ],
-    "security": {
-        "enable_fsgsbase": true,
-        "enable_kss": false,
-        "enable_kss_verify": false,
-        "enable_kss_verify_remote": false
-    }
+    ]
 }

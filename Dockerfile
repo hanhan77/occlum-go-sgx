@@ -64,6 +64,8 @@ WORKDIR /root/occlum-go-seal/occlum_instance
 # Create startup script
 RUN printf '#!/bin/bash\n\
 set -e\n\
+echo "Checking CPU features..."\n\
+cat /proc/cpuinfo | grep fsgsbase\n\
 cd /root/occlum-go-seal/occlum_instance\n\
 exec occlum run /bin/app\n' > /start.sh && \
     chmod +x /start.sh
