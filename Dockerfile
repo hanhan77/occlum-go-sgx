@@ -48,9 +48,17 @@ RUN cd enclave && \
         -I/opt/intel/sgxsdk/include/linux && \
     echo "=== Checking SGX libraries ===" && \
     ls -l /opt/intel/sgxsdk/lib64/libsgx_* && \
+    echo "=== Checking libsgx_urts.a symbols ===" && \
+    nm -D /opt/intel/sgxsdk/lib64/libsgx_urts.so | grep -i puts && \
+    echo "=== Checking libsgx_urts.a relocations ===" && \
+    readelf -r /opt/intel/sgxsdk/lib64/libsgx_urts.so | grep -i puts && \
+    echo "=== Checking libsgx_urts.a dynamic symbols ===" && \
+    readelf -d /opt/intel/sgxsdk/lib64/libsgx_urts.so | grep -i "NEEDED" && \
     occlum-gcc -shared -o libseal.so seal_u.o \
         -L/opt/intel/sgxsdk/lib64 \
-        -Wl,-Bstatic -lsgx_urts -Wl,-Bdynamic \
+        -Wl,-Bstatic \
+        -lsgx_urts \
+        -Wl,-Bdynamic \
         -Wl,-rpath,/opt/intel/sgxsdk/lib64 \
         -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib \
         -static-libstdc++ \
