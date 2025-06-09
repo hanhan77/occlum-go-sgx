@@ -73,6 +73,7 @@ set -e\n\
 echo "Checking CPU features..."\n\
 cat /proc/cpuinfo | grep fsgsbase\n\
 echo "Starting AESM service..."\n\
+export LD_LIBRARY_PATH=/opt/intel/sgx-aesm-service/aesm:$LD_LIBRARY_PATH\n\
 /opt/intel/sgx-aesm-service/aesm/aesm_service &\n\
 sleep 2\n\
 echo "Running application..."\n\
