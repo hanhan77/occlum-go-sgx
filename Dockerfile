@@ -47,8 +47,12 @@ RUN cd enclave && \
         -lsgx_urts \
         -lsgx_uae_service \
         -Wl,-rpath,/opt/intel/sgxsdk/lib64 \
-        -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib && \
-    ar rcs libseal.a seal.o seal_t.o
+        -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib \
+        -static-libstdc++ \
+        -static-libgcc && \
+    ar rcs libseal.a seal.o seal_t.o && \
+    ls -l libseal.* && \
+    pwd
 
 WORKDIR /root/occlum-go-seal
 RUN occlum-go mod tidy
@@ -58,18 +62,10 @@ ENV CGO_ENABLED=1
 ENV GOARCH=amd64
 ENV GOOS=linux
 ENV GOFLAGS="-buildmode=pie"
+ENV CC=/opt/occlum/toolchains/gcc/bin/gcc
+ENV CXX=/opt/occlum/toolchains/gcc/bin/g++
 ENV CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include -I/usr/local/occlum/x86_64-linux-musl/include"
-ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib"
-
-# Output occlum-go information
-RUN echo "=== occlum-go version ===" && \
-    occlum-go version && \
-    echo "=== occlum-go env CGO_* ===" && \
-    occlum-go env | grep CGO && \
-    echo "=== occlum-go env GO* ===" && \
-    occlum-go env | grep GO && \
-    echo "=== occlum-go env PATH ===" && \
-    occlum-go env | grep PATH
+ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc"
 
 # Build Go application using occlum-go
 RUN occlum-go build -a -installsuffix cgo -o app main.go
@@ -82,7 +78,9 @@ RUN mkdir -p occlum_instance/image/bin && \
     cp enclave/libseal.a occlum_instance/image/lib/ && \
     cp /opt/intel/sgxsdk/lib64/libsgx_urts.so.2 occlum_instance/image/lib/ && \
     cp /opt/intel/sgxsdk/lib64/libsgx_uae_service.so.1 occlum_instance/image/lib/ && \
-    cp /usr/local/occlum/x86_64-linux-musl/lib/libc.so occlum_instance/image/lib/
+    cp /usr/local/occlum/x86_64-linux-musl/lib/libc.so occlum_instance/image/lib/ && \
+    echo "=== Verifying files in occlum_instance/image/lib ===" && \
+    ls -l occlum_instance/image/lib/
 
 # Initialize and build Occlum image
 RUN cd occlum_instance && \
