@@ -83,7 +83,7 @@ RUN cd /root/occlum-go-seal && \
 # Build Go application using occlum-go
 RUN cd /root/occlum-go-seal && \
     echo "=== Building Go application ===" && \
-    CGO_ENABLED=1 GOOS=linux GOARCH=amd64 occlum-go build -v -x -a -installsuffix cgo -buildmode=pie -o app main.go 2>&1 | tee build.log && \
+    CGO_ENABLED=1 GOOS=linux GOARCH=amd64 occlum-go build -v -x -a -installsuffix cgo -buildmode=pie -ldflags="-linkmode=external -extldflags=-pie" -o app main.go 2>&1 | tee build.log && \
     echo "=== Build log ===" && \
     cat build.log && \
     echo "=== Checking built binary ===" && \
