@@ -42,9 +42,16 @@ RUN cd enclave && \
         -I/opt/intel/sgxsdk/include \
         -I/opt/intel/sgxsdk/include/tlibc \
         -I/opt/intel/sgxsdk/include/linux && \
-    # 不再使用 seal_u.o 或链接 host lib
-    occlum-gcc -shared -o libseal.so seal.o seal_t.o \
-        -static-libstdc++ -static-libgcc && \
+    occlum-gcc -fPIC -c seal_u.c -o seal_u.o \
+        -I/opt/intel/sgxsdk/include \
+        -I/opt/intel/sgxsdk/include/tlibc \
+        -I/opt/intel/sgxsdk/include/linux && \
+    occlum-gcc -shared -o libseal.so seal_u.o \
+        -L/usr/local/occlum/x86_64-linux-musl/lib \
+        -lsgx_urts \
+        -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib \
+        -static-libstdc++ \
+        -static-libgcc && \
     ar rcs libseal.a seal.o seal_t.o
 
 # Go module
@@ -59,25 +66,25 @@ ENV GOFLAGS="-buildmode=pie"
 ENV CC=/usr/local/occlum/bin/occlum-gcc
 ENV CXX=/usr/local/occlum/bin/occlum-g++
 ENV CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include -I/usr/local/occlum/x86_64-linux-musl/include -Wno-error=parentheses"
-ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc"
+ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/usr/local/occlum/x86_64-linux-musl/lib -lsgx_urts -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc"
 
 # Debug info
 RUN cd /root/occlum-go-seal && \
     echo "=== Environment variables ===" && env | grep -E 'GO|CGO' && \
     echo "=== Compiler version ===" && occlum-gcc --version && \
     echo "=== Current directory contents ===" && ls -la && \
-    echo "=== Enclave directory contents ===" && ls -la enclave/
+    echo "=== Enclave directory contents ===" && ls -la enclave/ && \
+    echo "=== Checking SGX libraries ===" && \
+    ls -l /usr/local/occlum/x86_64-linux-musl/lib/libsgx_urts* || true && \
+    ls -l /opt/intel/sgxsdk/lib64/libsgx_urts* || true
 
 # Build Go application using occlum-go
 RUN cd /root/occlum-go-seal && \
     echo "=== Building Go application ===" && \
     CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
     occlum-go build -v -x -a -installsuffix cgo -buildmode=pie \
-    -ldflags="-linkmode=external -extldflags=-L/root/occlum-go-seal/enclave -lseal -static-libstdc++ -static-libgcc -lc -lm -lrt -lpthread -ldl" \
-    -o app main.go && \
-    echo "=== Checking built binary ===" && file app && \
-    echo "=== Checking symbols ===" && nm app | grep -i main || true && \
-    echo "=== Checking dependencies ===" && ldd app || true
+    -ldflags="-linkmode=external -extldflags=-L/root/occlum-go-seal/enclave -lseal -L/usr/local/occlum/x86_64-linux-musl/lib -lsgx_urts -static-libstdc++ -static-libgcc -lc -lm -lrt -lpthread -ldl" \
+    -o app main.go
 
 # Set up Occlum filesystem
 RUN mkdir -p occlum_instance/image/bin && \
