@@ -55,6 +55,13 @@ RUN cd enclave && \
 WORKDIR /root/occlum-go-seal
 RUN occlum-go mod tidy
 
+# Check toolchain paths
+RUN echo "=== Checking Occlum toolchain paths ===" && \
+    find /opt/occlum -name "musl-gcc" 2>/dev/null || true && \
+    find /usr/local/occlum -name "musl-gcc" 2>/dev/null || true && \
+    echo "=== Checking which compiler occlum-go uses ===" && \
+    occlum-go env | grep -E "CC|CXX" || true
+
 # Set up environment for occlum-go build
 ENV CGO_ENABLED=1
 ENV GOARCH=amd64
@@ -63,7 +70,7 @@ ENV GOFLAGS="-buildmode=pie"
 ENV CC=gcc
 ENV CXX=g++
 ENV CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include -I/usr/local/occlum/x86_64-linux-musl/include -Wno-error=parentheses"
-ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc"
+ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc -nostdlib -lc"
 
 # Build Go application using occlum-go
 RUN occlum-go build -a -installsuffix cgo -o app main.go
