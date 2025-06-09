@@ -20,6 +20,18 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /root/occlum-go-seal
 COPY . .
 
+# Install zlib for musl
+RUN wget https://zlib.net/zlib-1.2.11.tar.gz && \
+    tar xf zlib-1.2.11.tar.gz && \
+    cd zlib-1.2.11 && \
+    CC=occlum-gcc ./configure --prefix=/usr/local/occlum/x86_64-linux-musl && \
+    make -j$(nproc) && \
+    make install && \
+    cd .. && \
+    rm -rf zlib-1.2.11* && \
+    echo "=== Zlib installation completed ===" && \
+    ls -l /usr/local/occlum/x86_64-linux-musl/lib/libz*
+
 # Build OpenSSL with musl
 RUN git clone -b OpenSSL_1_1_1 --depth 1 http://github.com/openssl/openssl && \
     cd openssl && \
@@ -91,16 +103,22 @@ ENV CXX=/usr/local/occlum/bin/occlum-g++
 ENV CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include -I/usr/local/occlum/x86_64-linux-musl/include -Wno-error=parentheses"
 ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,--whole-archive -lsgx_urts -Wl,--no-whole-archive -Wl,--whole-archive -lsgx_uae_service -Wl,--no-whole-archive -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc -nostdlib -lc -Wl,-e,_start"
 
-# Debug: Print environment variables
+# Debug: Print environment variables and check paths
 RUN echo "=== Environment variables ===" && \
     env | grep -E "CGO|GO|CC|CXX" && \
     echo "=== Current directory contents ===" && \
     ls -la && \
     echo "=== Enclave directory contents ===" && \
-    ls -la enclave/
+    ls -la enclave/ && \
+    echo "=== Checking musl libc ===" && \
+    ls -l /usr/local/occlum/x86_64-linux-musl/lib/libc* && \
+    echo "=== Checking SGX libraries ===" && \
+    ls -l /opt/intel/sgxsdk/lib64/libsgx*
 
 # Build Go application using occlum-go
-RUN occlum-go build -v -a -installsuffix cgo -o app main.go && \
+RUN cd /root/occlum-go-seal && \
+    occlum-gcc -v && \
+    occlum-go build -v -a -installsuffix cgo -o app main.go && \
     echo "=== Go build completed ===" && \
     echo "=== Checking Go binary ===" && \
     file app && \
@@ -120,6 +138,7 @@ RUN mkdir -p occlum_instance/image/bin && \
     cp enclave/libseal.a occlum_instance/image/lib/ && \
     cp /opt/intel/sgxsdk/lib64/libsgx_urts.so.2 occlum_instance/image/lib/ && \
     cp /usr/local/occlum/x86_64-linux-musl/lib/libc.so occlum_instance/image/lib/ && \
+    cp /usr/local/occlum/x86_64-linux-musl/lib/libz.so.1 occlum_instance/image/lib/ && \
     echo "=== Checking Occlum image contents ===" && \
     ls -lR occlum_instance/image/
 
