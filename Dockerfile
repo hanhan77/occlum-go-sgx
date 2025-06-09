@@ -71,8 +71,14 @@ ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64
 
 # Build Go application using occlum-go
 RUN cd /root/occlum-go-seal && \
-    occlum-go build -v -a -installsuffix cgo -o app main.go
+    occlum-go build  -a -installsuffix cgo -o app main.go
 
+RUN ls -l /root/occlum-go-seal
+RUN ls -l /usr/local/occlum/x86_64-linux-musl
+RUN echo "hello world!!!!"
+RUN ls -l /usr/local/occlum/x86_64-linux-musl/ssl
+RUN echo "hello world!!!! 11111"
+RUN ls -l /usr/local/occlum/x86_64-linux-musl/include
 # Set up Occlum
 RUN mkdir -p occlum_instance/image/bin && \
     mkdir -p occlum_instance/image/lib && \
