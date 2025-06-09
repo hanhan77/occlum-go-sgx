@@ -62,10 +62,15 @@ ENV CGO_ENABLED=1
 ENV GOARCH=amd64
 ENV GOOS=linux
 ENV GOFLAGS="-buildmode=pie"
-ENV CC=/opt/occlum/toolchains/gcc/bin/gcc
-ENV CXX=/opt/occlum/toolchains/gcc/bin/g++
+ENV CC=/usr/local/occlum/toolchains/gcc/bin/gcc
+ENV CXX=/usr/local/occlum/toolchains/gcc/bin/g++
 ENV CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include -I/usr/local/occlum/x86_64-linux-musl/include"
 ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc"
+
+# Verify compiler exists
+RUN ls -l /usr/local/occlum/toolchains/gcc/bin/gcc && \
+    echo "=== Compiler version ===" && \
+    /usr/local/occlum/toolchains/gcc/bin/gcc --version
 
 # Build Go application using occlum-go
 RUN occlum-go build -a -installsuffix cgo -o app main.go
