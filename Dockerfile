@@ -48,7 +48,9 @@ RUN cd enclave && \
         -lsgx_uae_service \
         -Wl,-rpath,/opt/intel/sgxsdk/lib64 \
         -static-libstdc++ \
-        -static-libgcc && \
+        -static-libgcc \
+        -Wl,--wrap=puts \
+        -Wl,--wrap=__stack_chk_fail && \
     ar rcs libseal.a seal.o seal_t.o
 
 WORKDIR /root/occlum-go-seal
@@ -56,11 +58,11 @@ RUN occlum-go mod tidy
 
 # Set CGO environment variables with musl compatibility
 ENV CGO_CFLAGS="-I/usr/local/occlum/x86_64-linux-musl/include -I./enclave -I/opt/intel/sgxsdk/include"
-ENV CGO_LDFLAGS="-L/usr/local/occlum/x86_64-linux-musl/lib -L./enclave -L/opt/intel/sgxsdk/lib64 -lseal -lsgx_urts -lsgx_uae_service -Wl,-rpath,/opt/intel/sgxsdk/lib64 -static-libstdc++ -static-libgcc"
+ENV CGO_LDFLAGS="-L/usr/local/occlum/x86_64-linux-musl/lib -L./enclave -L/opt/intel/sgxsdk/lib64 -lseal -lsgx_urts -lsgx_uae_service -Wl,-rpath,/opt/intel/sgxsdk/lib64 -static-libstdc++ -static-libgcc -Wl,--wrap=puts -Wl,--wrap=__stack_chk_fail"
 
 # Build Go application with musl compatibility
-
 RUN GOARCH=amd64 GOOS=linux \
+    CGO_ENABLED=1 \
     CGO_CFLAGS="$CGO_CFLAGS" \
     CGO_LDFLAGS="$CGO_LDFLAGS" \
     occlum-go build -a -installsuffix cgo -o app main.go
