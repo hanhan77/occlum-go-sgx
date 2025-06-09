@@ -48,8 +48,7 @@ RUN cd enclave && \
         -I/opt/intel/sgxsdk/include/linux && \
     occlum-gcc -shared -o libseal.so seal_u.o \
         -L/opt/intel/sgxsdk/lib64 \
-        -Wl,--whole-archive -lsgx_urts -Wl,--no-whole-archive \
-        -Wl,--whole-archive -lsgx_uae_service -Wl,--no-whole-archive \
+        -Wl,-Bstatic -lsgx_urts -lsgx_uae_service -Wl,-Bdynamic \
         -Wl,-rpath,/opt/intel/sgxsdk/lib64 \
         -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib \
         -static-libstdc++ \
@@ -68,7 +67,7 @@ ENV GOFLAGS="-buildmode=pie"
 ENV CC=/usr/local/occlum/bin/occlum-gcc
 ENV CXX=/usr/local/occlum/bin/occlum-g++
 ENV CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include -I/usr/local/occlum/x86_64-linux-musl/include -Wno-error=parentheses"
-ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,--whole-archive -lsgx_urts -Wl,--no-whole-archive -Wl,--whole-archive -lsgx_uae_service -Wl,--no-whole-archive -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc"
+ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,-Bstatic -lsgx_urts -lsgx_uae_service -Wl,-Bdynamic -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc"
 
 # Debug info
 RUN cd /root/occlum-go-seal && \
@@ -84,7 +83,7 @@ RUN cd /root/occlum-go-seal && \
     echo "=== Building Go application ===" && \
     CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
     occlum-go build -v -x -a -installsuffix cgo -buildmode=pie \
-    -ldflags="-linkmode=external -extldflags=-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,--whole-archive -lsgx_urts -Wl,--no-whole-archive -Wl,--whole-archive -lsgx_uae_service -Wl,--no-whole-archive -static-libstdc++ -static-libgcc -lc -lm -lrt -lpthread -ldl" \
+    -ldflags="-linkmode=external -extldflags=-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,-Bstatic -lsgx_urts -lsgx_uae_service -Wl,-Bdynamic -static-libstdc++ -static-libgcc -lc -lm -lrt -lpthread -ldl" \
     -o app main.go
 
 # Set up Occlum filesystem
@@ -92,8 +91,7 @@ RUN mkdir -p occlum_instance/image/bin && \
     mkdir -p occlum_instance/image/lib && \
     cp app occlum_instance/image/bin/ && \
     cp enclave/libseal.so enclave/libseal.a occlum_instance/image/lib/ && \
-    cp /usr/local/occlum/x86_64-linux-musl/lib/libc.so occlum_instance/image/lib/ && \
-    cp /opt/intel/sgxsdk/lib64/libsgx_urts.so.2 occlum_instance/image/lib/
+    cp /usr/local/occlum/x86_64-linux-musl/lib/libc.so occlum_instance/image/lib/
 
 # Initialize and build Occlum image
 RUN cd occlum_instance && \
