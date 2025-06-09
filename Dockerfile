@@ -1,7 +1,8 @@
-FROM occlum/occlum:0.31.0-ubuntu20.04
+FROM occlum/occlum:0.31.0-ubuntu20.04 as builder
 
 # Remove Intel SGX repository configuration
 RUN rm -f /etc/apt/sources.list.d/intel-sgx.list
+ENV GO111MODULE=on
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -44,11 +45,17 @@ RUN cd enclave && \
     g++ -shared -o libseal.so seal_u.o -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service && \
     ar rcs libseal.a seal.o seal_t.o
 
-# Build the Go application
-RUN go mod tidy && \
-    CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include" \
-    CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service" \
-    go build -o app
+WORKDIR /root/occlum-go-sgx
+
+# 用 occlum-go 工具链管理依赖
+RUN occlum-go mod tidy
+
+# 设置 CGO 环境变量
+ENV CGO_CFLAGS="-I/usr/local/occlum/x86_64-linux-musl/include -I./enclave"
+ENV CGO_LDFLAGS="-L/usr/local/occlum/x86_64-linux-musl/lib -L./enclave -lcmp -lseal"
+
+# 用 occlum-go 编译 Go 应用
+RUN occlum-go build -a -installsuffix cgo -o app main.go
 
 # Set up Occlum
 RUN mkdir -p occlum_instance/image/bin && \
@@ -63,7 +70,7 @@ RUN cd occlum_instance && \
     occlum build
 
 # Set the entry point
-WORKDIR /root/occlum-go-seal/occlum_instance
+WORKDIR /root/occlum-go-sgx/occlum_instance
 
 # Create startup script
 RUN printf '#!/bin/bash\n\
@@ -75,7 +82,7 @@ export LD_LIBRARY_PATH=/opt/intel/sgx-aesm-service/aesm:/usr/lib:$LD_LIBRARY_PAT
 /opt/intel/sgx-aesm-service/aesm/aesm_service &\n\
 sleep 2\n\
 echo "Running application..."\n\
-cd /root/occlum-go-seal/occlum_instance\n\
+cd /root/occlum-go-sgx/occlum_instance\n\
 exec occlum run /bin/app\n' > /start.sh && \
     chmod +x /start.sh
 
