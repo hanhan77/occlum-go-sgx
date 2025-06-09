@@ -1,7 +1,7 @@
 FROM occlum/occlum:0.31.0-ubuntu20.04 as builder
 
 # Remove Intel SGX repository configuration
-RUN rm -f /etc/apt/sources.list.d/intel-sgx.list
+RUN rm -f /etc/apt/sources.list.d/intel-sgxsdk.list
 ENV GO111MODULE=on
 
 # Install build dependencies
@@ -54,6 +54,14 @@ RUN cd enclave && \
 
 WORKDIR /root/occlum-go-seal
 RUN occlum-go mod tidy
+
+# Check libc paths
+RUN echo "=== Checking libc paths ===" && \
+    find / -name "libc.so*" 2>/dev/null | grep -v "Permission denied" && \
+    echo "=== Checking musl libc paths ===" && \
+    find / -name "musl" -type d 2>/dev/null | grep -v "Permission denied" && \
+    echo "=== Checking occlum lib paths ===" && \
+    ls -l /usr/local/occlum/x86_64-linux-musl/lib/ 2>/dev/null || true
 
 # Set up environment for occlum-go build
 ENV CGO_ENABLED=1
