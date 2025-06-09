@@ -57,11 +57,22 @@ RUN cd enclave && \
 WORKDIR /root/occlum-go-seal
 RUN occlum-go mod tidy
 
-# Find the correct compiler path
-RUN echo "=== Finding compiler paths ===" && \
-    find / -name gcc -type f 2>/dev/null | grep -v "Permission denied" && \
-    echo "=== Finding occlum toolchain ===" && \
-    find / -name "occlum" -type d 2>/dev/null | grep -v "Permission denied"
+# Debug system information
+RUN echo "=== System Information ===" && \
+    echo "Current directory: $(pwd)" && \
+    echo "PATH: $PATH" && \
+    echo "=== Checking common compiler locations ===" && \
+    ls -l /usr/bin/gcc* 2>/dev/null || true && \
+    ls -l /usr/local/bin/gcc* 2>/dev/null || true && \
+    echo "=== Checking Occlum installation ===" && \
+    which occlum && \
+    occlum version && \
+    echo "=== Checking occlum-go ===" && \
+    which occlum-go && \
+    occlum-go version && \
+    echo "=== Checking toolchain directories ===" && \
+    ls -l /usr/local/occlum/ 2>/dev/null || true && \
+    ls -l /opt/occlum/ 2>/dev/null || true
 
 # Set up environment for occlum-go build
 ENV CGO_ENABLED=1
