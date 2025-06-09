@@ -74,7 +74,7 @@ RUN cd /root/occlum-go-seal && \
     echo "=== Environment variables ===" && \
     env | grep -E 'GO|CGO' && \
     echo "=== Compiler version ===" && \
-    occlum-gcc -v && \
+    occlum-gcc --version && \
     echo "=== Current directory contents ===" && \
     ls -la && \
     echo "=== Enclave directory contents ===" && \
