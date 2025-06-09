@@ -85,17 +85,8 @@ RUN cd /root/occlum-go-seal && \
     echo "=== Building Go application ===" && \
     CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
     occlum-go build -v -x -a -installsuffix cgo -buildmode=pie \
-    -ldflags="-linkmode=external -extldflags=-L/usr/local/occlum/x86_64-linux-musl/lib -lc -lm -lrt -lpthread -ldl" \
-    -o app main.go > build.log 2>&1 || (echo 'Build failed'; cat build.log; exit 1) && \
-    echo "=== Build log ===" && \
-    cat build.log && \
-    echo "=== Checking built binary ===" && \
-    file app && \
-    echo "=== Checking symbols ===" && \
-    nm app | grep -i main || true && \
-    echo "=== Checking dependencies ===" && \
-    ldd app || true
-
+    -ldflags="-linkmode=external -extldflags='-L/usr/local/occlum/x86_64-linux-musl/lib -L/opt/intel/sgxsdk/lib64 -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/opt/intel/sgxsdk/lib64 -static-libstdc++ -static-libgcc -Wl,--whole-archive -lsgx_urts -Wl,--no-whole-archive -Wl,--whole-archive -lsgx_uae_service -Wl,--no-whole-archive -lc -lm -lrt -lpthread -ldl'" \
+    -o app main.go
 
 # Set up Occlum
 RUN mkdir -p occlum_instance/image/bin && \
