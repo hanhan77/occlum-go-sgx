@@ -45,9 +45,7 @@ RUN cd enclave && \
     g++ -shared -o libseal.so seal_u.o -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service && \
     ar rcs libseal.a seal.o seal_t.o
 
-WORKDIR /root/occlum-go-sgx
-
-# 用 occlum-go 工具链管理依赖
+WORKDIR /root/occlum-go-seal
 RUN occlum-go mod tidy
 
 # 设置 CGO 环境变量
@@ -70,7 +68,7 @@ RUN cd occlum_instance && \
     occlum build
 
 # Set the entry point
-WORKDIR /root/occlum-go-sgx/occlum_instance
+WORKDIR /root/occlum-go-seal/occlum_instance
 
 # Create startup script
 RUN printf '#!/bin/bash\n\
@@ -82,7 +80,7 @@ export LD_LIBRARY_PATH=/opt/intel/sgx-aesm-service/aesm:/usr/lib:$LD_LIBRARY_PAT
 /opt/intel/sgx-aesm-service/aesm/aesm_service &\n\
 sleep 2\n\
 echo "Running application..."\n\
-cd /root/occlum-go-sgx/occlum_instance\n\
+cd /root/occlum-go-seal/occlum_instance\n\
 exec occlum run /bin/app\n' > /start.sh && \
     chmod +x /start.sh
 
