@@ -48,12 +48,25 @@ RUN cd enclave && \
 WORKDIR /root/occlum-go-seal
 RUN occlum-go mod tidy
 
-# Build Go application with simplified CGO flags
-RUN GOARCH=amd64 GOOS=linux \
-    CGO_ENABLED=1 \
-    CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include" \
-    CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service" \
-    occlum-go build -a -installsuffix cgo -o app main.go
+# Set up environment for occlum-go build
+ENV CGO_ENABLED=1
+ENV GOARCH=amd64
+ENV GOOS=linux
+ENV CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include"
+ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service"
+
+# Output occlum-go information
+RUN echo "=== occlum-go version ===" && \
+    occlum-go version && \
+    echo "=== occlum-go env CGO_* ===" && \
+    occlum-go env | grep CGO && \
+    echo "=== occlum-go env GO* ===" && \
+    occlum-go env | grep GO && \
+    echo "=== occlum-go env PATH ===" && \
+    occlum-go env | grep PATH
+
+# Build Go application using occlum-go
+RUN occlum-go build -a -installsuffix cgo -o app main.go
 
 # Set up Occlum
 RUN mkdir -p occlum_instance/image/bin && \
