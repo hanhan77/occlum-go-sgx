@@ -46,9 +46,11 @@ RUN cd enclave && \
         -I/opt/intel/sgxsdk/include \
         -I/opt/intel/sgxsdk/include/tlibc \
         -I/opt/intel/sgxsdk/include/linux && \
+    echo "=== Checking SGX libraries ===" && \
+    ls -l /opt/intel/sgxsdk/lib64/libsgx_* && \
     occlum-gcc -shared -o libseal.so seal_u.o \
         -L/opt/intel/sgxsdk/lib64 \
-        -Wl,-Bstatic -lsgx_urts -lsgx_uae_service -Wl,-Bdynamic \
+        -Wl,-Bstatic -lsgx_urts -Wl,-Bdynamic \
         -Wl,-rpath,/opt/intel/sgxsdk/lib64 \
         -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib \
         -static-libstdc++ \
@@ -67,23 +69,21 @@ ENV GOFLAGS="-buildmode=pie"
 ENV CC=/usr/local/occlum/bin/occlum-gcc
 ENV CXX=/usr/local/occlum/bin/occlum-g++
 ENV CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include -I/usr/local/occlum/x86_64-linux-musl/include -Wno-error=parentheses"
-ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,-Bstatic -lsgx_urts -lsgx_uae_service -Wl,-Bdynamic -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc"
+ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,-Bstatic -lsgx_urts -Wl,-Bdynamic -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc"
 
 # Debug info
 RUN cd /root/occlum-go-seal && \
     echo "=== Environment variables ===" && env | grep -E 'GO|CGO' && \
     echo "=== Compiler version ===" && occlum-gcc --version && \
     echo "=== Current directory contents ===" && ls -la && \
-    echo "=== Enclave directory contents ===" && ls -la enclave/ && \
-    echo "=== Checking SGX libraries ===" && \
-    ls -l /opt/intel/sgxsdk/lib64/libsgx_urts* || true
+    echo "=== Enclave directory contents ===" && ls -la enclave/
 
 # Build Go application using occlum-go
 RUN cd /root/occlum-go-seal && \
     echo "=== Building Go application ===" && \
     CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
     occlum-go build -v -x -a -installsuffix cgo -buildmode=pie \
-    -ldflags="-linkmode=external -extldflags=-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,-Bstatic -lsgx_urts -lsgx_uae_service -Wl,-Bdynamic -static-libstdc++ -static-libgcc -lc -lm -lrt -lpthread -ldl" \
+    -ldflags="-linkmode=external -extldflags=-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,-Bstatic -lsgx_urts -Wl,-Bdynamic -static-libstdc++ -static-libgcc -lc -lm -lrt -lpthread -ldl" \
     -o app main.go
 
 # Set up Occlum filesystem
