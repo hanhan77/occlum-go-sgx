@@ -69,15 +69,29 @@ ENV CXX=/usr/local/occlum/bin/occlum-g++
 ENV CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include -I/usr/local/occlum/x86_64-linux-musl/include -Wno-error=parentheses"
 ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,--whole-archive -lsgx_urts -Wl,--no-whole-archive -Wl,--whole-archive -lsgx_uae_service -Wl,--no-whole-archive -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc"
 
+# Debug information
+RUN cd /root/occlum-go-seal && \
+    echo "=== Environment variables ===" && \
+    env | grep -E 'GO|CGO' && \
+    echo "=== Compiler version ===" && \
+    occlum-gcc -v && \
+    echo "=== Current directory contents ===" && \
+    ls -la && \
+    echo "=== Enclave directory contents ===" && \
+    ls -la enclave/
+
 # Build Go application using occlum-go
 RUN cd /root/occlum-go-seal && \
-    occlum-gcc -v && \
     echo "=== Building Go application ===" && \
-    CGO_ENABLED=1 GOOS=linux GOARCH=amd64 occlum-go build -v -x -a -installsuffix cgo -buildmode=pie -o app main.go && \
+    CGO_ENABLED=1 GOOS=linux GOARCH=amd64 occlum-go build -v -x -a -installsuffix cgo -buildmode=pie -o app main.go 2>&1 | tee build.log && \
+    echo "=== Build log ===" && \
+    cat build.log && \
     echo "=== Checking built binary ===" && \
     file app && \
     echo "=== Checking symbols ===" && \
-    nm app | grep -i main
+    nm app | grep -i main || true && \
+    echo "=== Checking dependencies ===" && \
+    ldd app || true
 
 # Set up Occlum
 RUN mkdir -p occlum_instance/image/bin && \
