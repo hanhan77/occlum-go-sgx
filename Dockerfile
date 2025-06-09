@@ -50,7 +50,7 @@ RUN occlum-go mod tidy
 
 # 设置 CGO 环境变量
 ENV CGO_CFLAGS="-I/usr/local/occlum/x86_64-linux-musl/include -I./enclave"
-ENV CGO_LDFLAGS="-L/usr/local/occlum/x86_64-linux-musl/lib -L./enclave -lcmp -lseal"
+ENV CGO_LDFLAGS="-L/usr/local/occlum/x86_64-linux-musl/lib -L./enclave -lseal"
 
 # 用 occlum-go 编译 Go 应用
 RUN occlum-go build -a -installsuffix cgo -o app main.go
