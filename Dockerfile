@@ -13,17 +13,15 @@ RUN apt-get update && apt-get install -y \
     git \
     wget \
     libssl-dev \
-    pkg-config \
-    libcppmicroservices4
+    pkg-config
 
 # Set up workspace
 WORKDIR /root/occlum-go-seal
 COPY . .
 
-# Copy AESM library to system directory
+# Create symbolic link for AESM library
 RUN mkdir -p /usr/lib && \
-    cp /opt/intel/sgx-aesm-service/aesm/libCppMicroServices.so.4.0.0 /usr/lib/ && \
-    ln -s /usr/lib/libCppMicroServices.so.4.0.0 /usr/lib/libCppMicroServices.so.4
+    ln -s /opt/intel/sgx-aesm-service/aesm/libCppMicroServices.so.4.0.0 /usr/lib/libCppMicroServices.so.4
 
 # Build the enclave
 RUN cd enclave && \
@@ -73,7 +71,7 @@ set -e\n\
 echo "Checking CPU features..."\n\
 cat /proc/cpuinfo | grep fsgsbase\n\
 echo "Starting AESM service..."\n\
-export LD_LIBRARY_PATH=/opt/intel/sgx-aesm-service/aesm:$LD_LIBRARY_PATH\n\
+export LD_LIBRARY_PATH=/opt/intel/sgx-aesm-service/aesm:/usr/lib:$LD_LIBRARY_PATH\n\
 /opt/intel/sgx-aesm-service/aesm/aesm_service &\n\
 sleep 2\n\
 echo "Running application..."\n\
