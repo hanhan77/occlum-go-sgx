@@ -20,8 +20,9 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /root/occlum-go-seal
 COPY . .
 
-# Build OpenSSL with musl
-RUN ./down_openssl.sh
+# Make scripts executable and build OpenSSL with musl
+RUN chmod +x down_openssl.sh && \
+    ./down_openssl.sh
 
 # Create symbolic link for AESM library
 RUN mkdir -p /usr/lib && \
