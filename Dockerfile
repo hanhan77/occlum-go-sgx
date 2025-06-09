@@ -91,12 +91,26 @@ ENV CXX=/usr/local/occlum/bin/occlum-g++
 ENV CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include -I/usr/local/occlum/x86_64-linux-musl/include -Wno-error=parentheses"
 ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,--whole-archive -lsgx_urts -Wl,--no-whole-archive -Wl,--whole-archive -lsgx_uae_service -Wl,--no-whole-archive -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc -nostdlib -lc -Wl,-e,_start"
 
+# Debug: Print environment variables
+RUN echo "=== Environment variables ===" && \
+    env | grep -E "CGO|GO|CC|CXX" && \
+    echo "=== Current directory contents ===" && \
+    ls -la && \
+    echo "=== Enclave directory contents ===" && \
+    ls -la enclave/
+
 # Build Go application using occlum-go
-RUN occlum-go build -a -installsuffix cgo -o app main.go && \
+RUN occlum-go build -v -a -installsuffix cgo -o app main.go && \
     echo "=== Go build completed ===" && \
     echo "=== Checking Go binary ===" && \
     file app && \
     ldd app || true
+
+# Debug: Check if app exists
+RUN echo "=== Checking if app exists ===" && \
+    ls -l app || echo "app not found" && \
+    echo "=== Current directory contents after build ===" && \
+    ls -la
 
 # Set up Occlum
 RUN mkdir -p occlum_instance/image/bin && \
