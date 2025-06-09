@@ -24,7 +24,7 @@ COPY . .
 RUN mkdir -p /usr/lib && \
     ln -s /opt/intel/sgx-aesm-service/aesm/libCppMicroServices.so.4.0.0 /usr/lib/libCppMicroServices.so.4
 
-# Build the enclave
+# Build the enclave with musl compatibility
 RUN cd enclave && \
     /opt/intel/sgxsdk/bin/x64/sgx_edger8r --trusted seal.edl --search-path /opt/intel/sgxsdk/include && \
     /opt/intel/sgxsdk/bin/x64/sgx_edger8r --untrusted seal.edl --search-path /opt/intel/sgxsdk/include && \
@@ -46,18 +46,24 @@ RUN cd enclave && \
         -L/opt/intel/sgxsdk/lib64 \
         -lsgx_urts \
         -lsgx_uae_service \
-        -Wl,-rpath,/opt/intel/sgxsdk/lib64 && \
+        -Wl,-rpath,/opt/intel/sgxsdk/lib64 \
+        -static-libstdc++ \
+        -static-libgcc && \
     ar rcs libseal.a seal.o seal_t.o
 
 WORKDIR /root/occlum-go-seal
 RUN occlum-go mod tidy
 
-# Set CGO environment variables with proper library paths
+# Set CGO environment variables with musl compatibility
 ENV CGO_CFLAGS="-I/usr/local/occlum/x86_64-linux-musl/include -I./enclave -I/opt/intel/sgxsdk/include"
-ENV CGO_LDFLAGS="-L/usr/local/occlum/x86_64-linux-musl/lib -L./enclave -L/opt/intel/sgxsdk/lib64 -lseal -lsgx_urts -lsgx_uae_service -Wl,-rpath,/opt/intel/sgxsdk/lib64"
+ENV CGO_LDFLAGS="-L/usr/local/occlum/x86_64-linux-musl/lib -L./enclave -L/opt/intel/sgxsdk/lib64 -lseal -lsgx_urts -lsgx_uae_service -Wl,-rpath,/opt/intel/sgxsdk/lib64 -static-libstdc++ -static-libgcc"
 
-# Build Go application
-RUN occlum-go build -a -installsuffix cgo -o app main.go
+# Build Go application with musl compatibility
+
+RUN GOARCH=amd64 GOOS=linux \
+    CGO_CFLAGS="$CGO_CFLAGS" \
+    CGO_LDFLAGS="$CGO_LDFLAGS" \
+    occlum-go build -a -installsuffix cgo -o app main.go
 
 # Set up Occlum
 RUN mkdir -p occlum_instance/image/bin && \
@@ -66,7 +72,8 @@ RUN mkdir -p occlum_instance/image/bin && \
     cp enclave/libseal.so occlum_instance/image/lib/ && \
     cp enclave/libseal.a occlum_instance/image/lib/ && \
     cp /opt/intel/sgxsdk/lib64/libsgx_urts.so.2 occlum_instance/image/lib/ && \
-    cp /opt/intel/sgxsdk/lib64/libsgx_uae_service.so.1 occlum_instance/image/lib/
+    cp /opt/intel/sgxsdk/lib64/libsgx_uae_service.so.1 occlum_instance/image/lib/ && \
+    cp /usr/local/occlum/x86_64-linux-musl/lib/libc.so occlum_instance/image/lib/
 
 # Initialize and build Occlum image
 RUN cd occlum_instance && \
@@ -82,7 +89,7 @@ set -e\n\
 echo "Checking CPU features..."\n\
 cat /proc/cpuinfo | grep fsgsbase\n\
 echo "Starting AESM service..."\n\
-export LD_LIBRARY_PATH=/opt/intel/sgx-aesm-service/aesm:/usr/lib:/opt/intel/sgxsdk/lib64:$LD_LIBRARY_PATH\n\
+export LD_LIBRARY_PATH=/opt/intel/sgx-aesm-service/aesm:/usr/lib:/opt/intel/sgxsdk/lib64:/usr/local/occlum/x86_64-linux-musl/lib:$LD_LIBRARY_PATH\n\
 /opt/intel/sgx-aesm-service/aesm/aesm_service &\n\
 sleep 2\n\
 echo "Running application..."\n\
