@@ -65,8 +65,8 @@ RUN cd enclave && \
         -I/opt/intel/sgxsdk/include/linux && \
     occlum-gcc -shared -o libseal.so seal_u.o \
         -L/opt/intel/sgxsdk/lib64 \
-        -lsgx_urts \
-        -lsgx_uae_service \
+        -Wl,--whole-archive -lsgx_urts -Wl,--no-whole-archive \
+        -Wl,--whole-archive -lsgx_uae_service -Wl,--no-whole-archive \
         -Wl,-rpath,/opt/intel/sgxsdk/lib64 \
         -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib \
         -static-libstdc++ \
@@ -89,7 +89,7 @@ ENV GOFLAGS="-buildmode=pie"
 ENV CC=/usr/local/occlum/bin/occlum-gcc
 ENV CXX=/usr/local/occlum/bin/occlum-g++
 ENV CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include -I/usr/local/occlum/x86_64-linux-musl/include -Wno-error=parentheses"
-ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc -nostdlib -lc -Wl,-e,_start"
+ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,--whole-archive -lsgx_urts -Wl,--no-whole-archive -Wl,--whole-archive -lsgx_uae_service -Wl,--no-whole-archive -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc -nostdlib -lc -Wl,-e,_start"
 
 # Build Go application using occlum-go
 RUN occlum-go build -a -installsuffix cgo -o app main.go && \
