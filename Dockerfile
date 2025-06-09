@@ -67,12 +67,17 @@ ENV GOFLAGS="-buildmode=pie"
 ENV CC=/usr/local/occlum/bin/occlum-gcc
 ENV CXX=/usr/local/occlum/bin/occlum-g++
 ENV CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include -I/usr/local/occlum/x86_64-linux-musl/include -Wno-error=parentheses"
-ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,--whole-archive -lsgx_urts -Wl,--no-whole-archive -Wl,--whole-archive -lsgx_uae_service -Wl,--no-whole-archive -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc -Wl,-Bstatic -lsgx_urts -lsgx_uae_service -Wl,-Bdynamic"
+ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -Wl,--whole-archive -lsgx_urts -Wl,--no-whole-archive -Wl,--whole-archive -lsgx_uae_service -Wl,--no-whole-archive -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc"
 
 # Build Go application using occlum-go
 RUN cd /root/occlum-go-seal && \
     occlum-gcc -v && \
-    CGO_ENABLED=1 GOOS=linux GOARCH=amd64 occlum-go build -v -a -installsuffix cgo -buildmode=pie -o app main.go
+    echo "=== Building Go application ===" && \
+    CGO_ENABLED=1 GOOS=linux GOARCH=amd64 occlum-go build -v -x -a -installsuffix cgo -buildmode=pie -o app main.go && \
+    echo "=== Checking built binary ===" && \
+    file app && \
+    echo "=== Checking symbols ===" && \
+    nm app | grep -i main
 
 # Set up Occlum
 RUN mkdir -p occlum_instance/image/bin && \
