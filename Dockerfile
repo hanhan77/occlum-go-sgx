@@ -20,29 +20,50 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /root/occlum-go-seal
 COPY . .
 
+# Build OpenSSL with musl
+RUN git clone -b OpenSSL_1_1_1 --depth 1 http://github.com/openssl/openssl && \
+    cd openssl && \
+    CC=occlum-gcc ./config \
+        --prefix=/usr/local/occlum/x86_64-linux-musl \
+        --openssldir=/usr/local/occlum/x86_64-linux-musl/ssl \
+        --with-rand-seed=rdcpu \
+        no-async no-zlib && \
+    make -j$(nproc) && \
+    make install && \
+    cd .. && \
+    rm -rf openssl && \
+    echo "=== OpenSSL installation completed ===" && \
+    echo "=== Checking OpenSSL installation ===" && \
+    ls -l /usr/local/occlum/x86_64-linux-musl/include/openssl && \
+    ls -l /usr/local/occlum/x86_64-linux-musl/lib/libssl* && \
+    echo "=== Checking musl libc paths ===" && \
+    ls -l /usr/local/occlum/x86_64-linux-musl/lib/libc* && \
+    echo "=== Checking SGX SDK paths ===" && \
+    ls -l /opt/intel/sgxsdk/lib64/libsgx*
+
 # Create symbolic link for AESM library
 RUN mkdir -p /usr/lib && \
     ln -s /opt/intel/sgx-aesm-service/aesm/libCppMicroServices.so.4.0.0 /usr/lib/libCppMicroServices.so.4
 
-# Build the enclave
+# Build the enclave with musl
 RUN cd enclave && \
     /opt/intel/sgxsdk/bin/x64/sgx_edger8r --trusted seal.edl --search-path /opt/intel/sgxsdk/include && \
     /opt/intel/sgxsdk/bin/x64/sgx_edger8r --untrusted seal.edl --search-path /opt/intel/sgxsdk/include && \
-    g++ -fPIC -c seal.cpp -o seal.o \
+    occlum-gcc -fPIC -c seal.cpp -o seal.o \
         -I/opt/intel/sgxsdk/include \
         -I/opt/intel/sgxsdk/include/tlibc \
         -I/opt/intel/sgxsdk/include/libcxx \
         -I/opt/intel/sgxsdk/include/stdc++ \
         -I/opt/intel/sgxsdk/include/linux && \
-    g++ -fPIC -c seal_t.c -o seal_t.o \
+    occlum-gcc -fPIC -c seal_t.c -o seal_t.o \
         -I/opt/intel/sgxsdk/include \
         -I/opt/intel/sgxsdk/include/tlibc \
         -I/opt/intel/sgxsdk/include/linux && \
-    g++ -fPIC -c seal_u.c -o seal_u.o \
+    occlum-gcc -fPIC -c seal_u.c -o seal_u.o \
         -I/opt/intel/sgxsdk/include \
         -I/opt/intel/sgxsdk/include/tlibc \
         -I/opt/intel/sgxsdk/include/linux && \
-    g++ -shared -o libseal.so seal_u.o \
+    occlum-gcc -shared -o libseal.so seal_u.o \
         -L/opt/intel/sgxsdk/lib64 \
         -lsgx_urts \
         -lsgx_uae_service \
@@ -50,18 +71,15 @@ RUN cd enclave && \
         -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib \
         -static-libstdc++ \
         -static-libgcc && \
-    ar rcs libseal.a seal.o seal_t.o
+    ar rcs libseal.a seal.o seal_t.o && \
+    echo "=== Enclave build completed ===" && \
+    echo "=== Checking enclave libraries ===" && \
+    ls -l libseal* && \
+    echo "=== Checking enclave symbols ===" && \
+    nm -D libseal.so | grep -i sgx
 
 WORKDIR /root/occlum-go-seal
 RUN occlum-go mod tidy
-
-# Check libc paths
-RUN echo "=== Checking libc paths ===" && \
-    find / -name "libc.so*" 2>/dev/null | grep -v "Permission denied" && \
-    echo "=== Checking musl libc paths ===" && \
-    find / -name "musl" -type d 2>/dev/null | grep -v "Permission denied" && \
-    echo "=== Checking occlum lib paths ===" && \
-    ls -l /usr/local/occlum/x86_64-linux-musl/lib/ 2>/dev/null || true
 
 # Set up environment for occlum-go build
 ENV CGO_ENABLED=1
@@ -74,7 +92,11 @@ ENV CGO_CFLAGS="-I/root/occlum-go-seal/enclave -I/opt/intel/sgxsdk/include -I/us
 ENV CGO_LDFLAGS="-L/root/occlum-go-seal/enclave -lseal -L/opt/intel/sgxsdk/lib64 -lsgx_urts -lsgx_uae_service -L/usr/local/occlum/x86_64-linux-musl/lib -Wl,-rpath,/usr/local/occlum/x86_64-linux-musl/lib -static-libstdc++ -static-libgcc -nostdlib -lc -Wl,-e,_start"
 
 # Build Go application using occlum-go
-RUN occlum-go build -a -installsuffix cgo -o app main.go
+RUN occlum-go build -a -installsuffix cgo -o app main.go && \
+    echo "=== Go build completed ===" && \
+    echo "=== Checking Go binary ===" && \
+    file app && \
+    ldd app || true
 
 # Set up Occlum
 RUN mkdir -p occlum_instance/image/bin && \
@@ -83,12 +105,17 @@ RUN mkdir -p occlum_instance/image/bin && \
     cp enclave/libseal.so occlum_instance/image/lib/ && \
     cp enclave/libseal.a occlum_instance/image/lib/ && \
     cp /opt/intel/sgxsdk/lib64/libsgx_urts.so.2 occlum_instance/image/lib/ && \
-    cp /usr/local/occlum/x86_64-linux-musl/lib/libc.so occlum_instance/image/lib/
+    cp /usr/local/occlum/x86_64-linux-musl/lib/libc.so occlum_instance/image/lib/ && \
+    echo "=== Checking Occlum image contents ===" && \
+    ls -lR occlum_instance/image/
 
 # Initialize and build Occlum image
 RUN cd occlum_instance && \
     occlum init && \
-    occlum build
+    occlum build && \
+    echo "=== Occlum build completed ===" && \
+    echo "=== Checking Occlum instance ===" && \
+    ls -lR
 
 # Set the entry point
 WORKDIR /root/occlum-go-seal/occlum_instance
